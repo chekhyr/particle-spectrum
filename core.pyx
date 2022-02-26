@@ -7,40 +7,40 @@ import math
 
 
 cdef class EMF:
-    cdef:
-            double ampl
-            double omg
-            double alph
-            double[:] k
-            str mode
+    def __init__(self):
+        self._e = None
+        self._h = None
 
-    def __init__(self, str mode, list k=[0., 0., 0.], double ampl=1., double omg=1., double alph=0.):
-        self.mode = mode
+    def init_const(self, ampl=1.):
+        def e(x, t):
+            return ampl * np.array([0., 0., 0.])
+        def h(x, t):
+            return ampl * np.array([0., 0., 1.])
+        self._e = e
+        self._h = h
+
+    def init_wave(self, list k=[0., 0., 0.], ampl=1., omg=1., alph=0.):
         _k = np.array(k)
-        self.k = _k/np.sqrt(_k.dot(_k)) # propagation direction
-        self.alph = alph  # initial phase (field orientation)
-        self.omg = omg  # oscillation frequency
-        self.ampl = ampl
+        _k = _k / np.sqrt(_k.dot(_k))
+        def e(x, t):
+            ex = ampl * math.cos(omg * t - np.dot(_k, x) + alph)
+            ey = ampl * math.sin(omg * t - np.dot(_k, x) + alph)
+            ez = 0
+            return np.array([ex, ey, ez])
+        def h(x, t):
+            return np.cross(e(x, t), _k)
+        self._e = e
+        self._h = h
+
+    def init_gauss(self, ):
+        print('err: Gaussian beam not implemented')
+        return -1
 
     def __call__(self, x, t):
-        if self.mode == 'magnet':
-            e = self.ampl*np.array([0., 0., 0.])
-            h = self.ampl*np.array([0., 0., 1.])
-            return (e, h)
-        elif self.mode == 'monowave':
-            ex = self.ampl*math.cos(self.omg*t - np.dot(self.k, x) + self.alph)
-            ey = self.ampl*math.sin(self.omg*t - np.dot(self.k, x) + self.alph)
-            ez = 0
-            e = np.array([ex, ey, ez])
-            h = np.cross(e, self.k)
-            return (e, h)
-        elif self.mode == 'gauss':
-            print('err: Gaussian beam not implemented')
-            return -1
-        elif self.mode == 'debug':
-            print('why?')
-            return 0
+        return (self._e(x, t), self._h(x, t))
 
+
+'''
 cdef class Particle:
     cdef:
         double [:] x_mv, p_mv
@@ -62,3 +62,4 @@ cdef Lorentz(q, v, e, h):
 
 cpdef boris(p0, x0, charge, mass, field, t_span, t_fragm):
     return -1
+'''

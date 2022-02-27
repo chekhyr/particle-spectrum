@@ -6,38 +6,42 @@ cimport numpy as np
 import math as mt
 from classes import EMF
 
-cdef gamma(double[3] p):
-    return mt.sqrt(1. + p[0]*p[0] + p[1]*p[1] + p[2]*p[2])
+cdef gamma(np.ndarray p):
+    return mt.sqrt(1. + p.dot(p))
 
-cdef Lorentz(q, v, e, h):
+cdef Lorentz(double q, np.ndarray v, np.ndarray e, np.ndarray h):
     return q*(e + np.cross(v, h))
 
+'''
 cdef radFrict(void):
-    return -1 # not implemented
+    return -1
+''' # radiational friction is not implemented
 
-cdef boris(double[3] p0, double[3] x0, double charge, double mass, field, double[2] t_span, int Nt):
+cpdef boris(np.ndarray p0, np.ndarray x0, double charge, double mass, field, tuple t_span, int Nt):
     cdef:
         int j
-        double[:] time
         double dt
 
-        double[3][:] r
-        double[3][:] p
-        double[3][:] v
+        np.ndarray time
+        np.ndarray r
+        np.ndarray p
+        np.ndarray v
 
 # integration segment
-    dt = (t_span[1] - t_span[0]) / Nt
-    for j in range(0, Nt+1, 1):
-        time[j] = t_span[0] + j * dt
+    time = np.linspace(t_span[0], t_span[1], Nt)
+    dt = time[1] - time[0]
+    r = np.zeros((3, Nt))
+    p = np.zeros((3, Nt))
+    v = np.zeros((3, Nt))
 
 # time-dependent vectors
     cdef:
-        double[3] e =  field._e(time[0], x0)
-        double[3] h = field._h(time[0], x0)
-        double[3] p_n_minus_half
-        double[3] p_minus
-        double[3] tau
-        double[3] p_n_plus_half
+        np.ndarray e =  field._e(time[0], x0)
+        np.ndarray h = field._h(time[0], x0)
+        np.ndarray p_n_minus_half
+        np.ndarray p_minus
+        np.ndarray tau
+        np.ndarray p_n_plus_half
 
 # first step
     p[:, 0] = p0

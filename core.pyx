@@ -3,63 +3,63 @@
 import numpy as np
 import cython
 cimport numpy as np
-import math
+import math as mt
+from classes import EMF
 
-
-cdef class EMF:
-    def __init__(self):
-        self._e = None
-        self._h = None
-
-    def init_const(self, ampl=1.):
-        def e(x, t):
-            return ampl * np.array([0., 0., 0.])
-        def h(x, t):
-            return ampl * np.array([0., 0., 1.])
-        self._e = e
-        self._h = h
-
-    def init_wave(self, list k=[0., 0., 0.], ampl=1., omg=1., alph=0.):
-        _k = np.array(k)
-        _k = _k / np.sqrt(_k.dot(_k))
-        def e(x, t):
-            ex = ampl * math.cos(omg * t - np.dot(_k, x) + alph)
-            ey = ampl * math.sin(omg * t - np.dot(_k, x) + alph)
-            ez = 0
-            return np.array([ex, ey, ez])
-        def h(x, t):
-            return np.cross(e(x, t), _k)
-        self._e = e
-        self._h = h
-
-    def init_gauss(self, ):
-        print('err: Gaussian beam not implemented')
-        return -1
-
-    def __call__(self, x, t):
-        return (self._e(x, t), self._h(x, t))
-
-
-'''
-cdef class Particle:
-    cdef:
-        double [:] x_mv, p_mv
-        np.ndarray x, p
-        EMF field
-
-    def __init__(self, x, p, field):
-        self.x = np.array(x).astype(np.double)
-        self.p = np.array(p).astype(np.double)
-        self.x_mv = self.x
-        self.p_mv = self.p
-        self.field = field
-
-cdef gamma(p):
-    return math.sqrt(1. + p.dot(p))
+cdef gamma(double[3] p):
+    return mt.sqrt(1. + p[0]*p[0] + p[1]*p[1] + p[2]*p[2])
 
 cdef Lorentz(q, v, e, h):
     return q*(e + np.cross(v, h))
 
-cpdef boris(p0, x0, charge, mass, field, t_span, t_fragm):
-    return -1
-'''
+cdef radFrict(void):
+    return -1 # not implemented
+
+cdef boris(double[3] p0, double[3] x0, double charge, double mass, field, double[2] t_span, int Nt):
+    cdef:
+        int j
+        double[:] time
+        double dt
+
+        double[3][:] r
+        double[3][:] p
+        double[3][:] v
+
+# integration segment
+    dt = (t_span[1] - t_span[0]) / Nt
+    for j in range(0, Nt+1, 1):
+        time[j] = t_span[0] + j * dt
+
+# time-dependent vectors
+    cdef:
+        double[3] e =  field._e(time[0], x0)
+        double[3] h = field._h(time[0], x0)
+        double[3] p_n_minus_half
+        double[3] p_minus
+        double[3] tau
+        double[3] p_n_plus_half
+
+# first step
+    p[:, 0] = p0
+    v[:, 0] = p0[:, 1] / (mass * gamma(p0))
+    r[:, 0] = x0
+    p_n_plus_half = p[:, 0] + (dt / 2) * Lorentz(charge, v[:, 0], e, h)
+    r[:, 1] = r[:, 0] + dt * p_n_plus_half / (mass * gamma(p_n_plus_half))
+
+# main cycle
+    for j in range(1, Nt+1, 1):
+        E = field._e(time[j], r[:, j])
+        H = field._h(time[j], r[:, j])
+
+    p_n_minus_half = p_n_plus_half
+    p_minus = p_n_minus_half + charge * E * (dt / 2)
+    tau = charge * H / (mass * gamma(p_minus)) * (dt / 2)
+    p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * tau / (1 + np.dot(tau, tau))) + charge * E * (dt / 2)
+
+    p[:, j] = 0.5 * (p_n_plus_half + p_n_minus_half)
+    if j != (Nt+1):
+        r[:, j + 1] = r[:, j] + dt * p_n_plus_half / (mass * gamma(p_n_plus_half))
+    v[:, j] = p[:, j] / (mass * gamma(p[:, j]))
+
+    return (r, p, v, time)
+

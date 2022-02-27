@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-from core import EMF
+from classes import EMF
 import numpy as np
 
+obj = EMF()
+obj.init_wave()
 
-obj = EMF('debug', [1., 20., 1.])
-x = np.array([0., 0., 6.])
-print(obj(x, 8.))
+x = np.array([0., 0., 10.])
+t = 8.
+print(obj(x, t))

@@ -2,18 +2,18 @@ import numpy as np
 import math
 
 class EMF:
-    __slots__ = ['_e', '_h']
+    __slots__ = ['e', 'h']
     def __init__(self):
-        self._e = None
-        self._h = None
+        self.e = None
+        self.h = None
 
     def init_const(self):
         def e(x, t):
             return np.array([0., 0., 0.]).astype(np.double)
         def h(x, t):
             return np.array([0., 0., 1.]).astype(np.double)
-        self._e = e
-        self._h = h
+        self.e = e
+        self.h = h
 
     def init_wave(self, k=[0., 0., 1.], ampl=1., omg=1., alph=0.):
         _k = np.array(k).astype(np.double)
@@ -25,15 +25,17 @@ class EMF:
             return np.array([ex, ey, ez]).astype(np.double)
         def h(x, t):
             return np.cross(e(x, t), _k)
-        self._e = e
-        self._h = h
+        self.e = e
+        self.h = h
 
     def init_gauss(self, ):
         print('err: Gaussian beam not implemented')
         return -1
 
+    """
     def __call__(self, x, t):
         return (self._e(x, t), self._h(x, t))
+    """
 
 class Particle:
     def __init__(self, x, p, field):

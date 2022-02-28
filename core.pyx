@@ -39,30 +39,30 @@ cpdef boris(np.ndarray p0, np.ndarray x0, double charge, double mass, field, tup
         np.ndarray e =  field._e(time[0], x0)
         np.ndarray h = field._h(time[0], x0)
         np.ndarray p_n_minus_half
-        np.ndarray p_minus
+        np.ndarray p_minus = np.zeros(3)
         np.ndarray tau
         np.ndarray p_n_plus_half
 
 # first step
     p[:, 0] = p0
-    v[:, 0] = p0[:, 1] / (mass * gamma(p0))
+    v[:, 0] = np.divide(p0, (mass * gamma(p0)))
     r[:, 0] = x0
     p_n_plus_half = p[:, 0] + (dt / 2) * Lorentz(charge, v[:, 0], e, h)
-    r[:, 1] = r[:, 0] + dt * p_n_plus_half / (mass * gamma(p_n_plus_half))
+    r[:, 1] = r[:, 0] + dt * np.divide(p_n_plus_half, (mass * gamma(p_n_plus_half)))
 
 # main cycle
-    for j in range(1, Nt+1, 1):
+    for j in range(1, Nt, 1):
         E = field._e(time[j], r[:, j])
         H = field._h(time[j], r[:, j])
 
     p_n_minus_half = p_n_plus_half
-    p_minus = p_n_minus_half + charge * E * (dt / 2)
+    p_minus[:] = p_n_minus_half[:] + charge * E * (dt / 2)
     tau = charge * H / (mass * gamma(p_minus)) * (dt / 2)
-    p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * tau / (1 + np.dot(tau, tau))) + charge * E * (dt / 2)
+    p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * np.divide(tau, (1 + np.dot(tau, tau)))) + charge * E * (dt / 2)
 
     p[:, j] = 0.5 * (p_n_plus_half + p_n_minus_half)
-    if j != (Nt+1):
-        r[:, j + 1] = r[:, j] + dt * p_n_plus_half / (mass * gamma(p_n_plus_half))
+    if j != Nt-1:
+        r[:, j + 1] = r[:, j] + dt * np.divide(p_n_plus_half, (mass * gamma(p_n_plus_half)))
     v[:, j] = p[:, j] / (mass * gamma(p[:, j]))
 
     return (r, p, v, time)

@@ -4,9 +4,9 @@ from core import boris
 import numpy as np
 
 obj = EMF()
-obj.init_wave()
+obj.init_const()
 
-x0 = np.array([0., 0., 10.])
+x0 = np.array([0., 0., 1.])
 p0 = np.array([1., 1., 1.])
 tspan = (0., 10.)
 t = 8.

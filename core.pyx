@@ -54,7 +54,7 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: np.double, mass: np.double, 
         p_minus = np.add(p_n_minus_half, charge * e * (dt / 2))
         tau = np.divide(charge * h, (mass * gamma(p_minus)) * (dt / 2))
         p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * np.divide(tau, (1 + np.dot(tau, tau)))) + charge * e * (dt / 2)
-    # insufficient indexation
+
         p[j, :] = 0.5 * (p_n_plus_half + p_n_minus_half)
         if j != nt-1:
             r[j+1, :] = r[j, :] + dt * np.divide(p_n_plus_half, (mass * gamma(p_n_plus_half)))

@@ -2,6 +2,7 @@
 from classes import EMF
 from core import boris
 import numpy as np
+import matplotlib.pyplot as plt
 
 obj = EMF()
 obj.init_const()

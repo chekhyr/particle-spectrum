@@ -1,0 +1,4 @@
+numpy~=1.22.2
+setuptools~=59.3.0
+Cython~=0.29.27
+matplotlib~=3.5.1

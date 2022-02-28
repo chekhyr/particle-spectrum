@@ -12,10 +12,11 @@ cdef gamma(p: np.ndarray[3]):
 cdef lorentz(double q, np.ndarray v, np.ndarray e, np.ndarray h):
     return q*(e + np.cross(v, h))
 
+#TODO: Introduce reaction force and modify boris() accordingly
 '''
 cdef radFrict(void):
     return -1
-''' # radiational friction is not implemented
+''' # radiation reaction force is not implemented
 
 cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: np.double, mass: np.double, field: EMF, t_span: tuple, nt: np.intc):
     cdef:
@@ -34,7 +35,7 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: np.double, mass: np.double, 
 
         np.ndarray p_n_plus_half
         np.ndarray p_n_minus_half
-        np.ndarray p_minus = p0
+        np.ndarray p_minus
         np.ndarray tau
 
 # first step
@@ -60,4 +61,10 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: np.double, mass: np.double, 
         v[j, :] = np.divide(p[j, :], (mass * gamma(p[j, :])))
 
     return r, p, v, time
+
+#TODO: Limit interaction time by introducing external field envelope
+
+#TODO: Add function to find integrated emission spectrum into a given angle
+
+#TODO: Add function to draw spectrum colormap for a given angle interval (all angles)
 

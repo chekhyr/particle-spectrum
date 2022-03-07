@@ -4,13 +4,13 @@ from core import boris
 import numpy as np
 
 objEMF = EMF()
-objEMF.init_const(100.)
-#objEMF.init_wave((0., 0., 1.), 1., 100., 0.)
+objEMF.init_const(1.)
+#objEMF.init_wave(1., 100., (0., 0., 1.), 0.)
 
 m = 1.
 e = 1.
 
-x0 = np.array([0., 0., 0.])
+x0 = np.array([0., 1., 0.])
 p0 = np.array([1., 0., 1.])
 tspan = (0., 1000.)
 nt = 100

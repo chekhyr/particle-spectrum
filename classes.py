@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 
 class EMF:
@@ -20,7 +21,7 @@ class EMF:
         self.e = e
         self.h = h
 
-    def init_wave(self, k=(0., 0., 1.), ampl=1., omg=1., alph=0.):
+    def init_wave(self, ampl=1., omg=1., k=(0., 0., 1.), alph=0.):
         _k = np.array(k).astype(np.double)
         _k = _k / np.sqrt(_k.dot(_k))
 
@@ -49,6 +50,7 @@ class Plotter:
         self.t = t
 
     def space(self):
+        mpl.use('Qt5Agg')
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
         z = self.r[:, 2]

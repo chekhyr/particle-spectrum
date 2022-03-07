@@ -18,12 +18,12 @@ cdef radFrict(void):
     return -1
 ''' # radiation reaction force is not implemented
 
-cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: np.double, mass: np.double, field: EMF, t_span: tuple, nt: np.intc):
+cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: EMF, t_span: tuple, nt: int):
     cdef:
-        # integration segment
+    # integration segment
         np.ndarray time = np.linspace(t_span[0], t_span[1], nt)
         double dt = time[1] - time[0]
-        # answer
+    # answer
         np.ndarray r = np.zeros((nt, 3))
         np.ndarray p = np.zeros((nt, 3))
         np.ndarray v = np.zeros((nt, 3))
@@ -51,9 +51,9 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: np.double, mass: np.double, 
         h = field.h(r[j, :], time[j])
 
         p_n_minus_half = p_n_plus_half
-        p_minus = np.add(p_n_minus_half, charge * e * (dt / 2))
-        tau = np.divide(charge * h, (mass * gamma(p_minus)) * (dt / 2))
-        p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * np.divide(tau, (1 + np.dot(tau, tau)))) + charge * e * (dt / 2)
+        p_minus = np.add(p_n_minus_half, np.multiply(e, charge) * (dt / 2))
+        tau = np.divide(np.multiply(h, charge), (mass * gamma(p_minus)) * (dt / 2))
+        p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * np.divide(tau, (1 + np.dot(tau, tau)))) + np.multiply(e, charge) * (dt / 2)
 
         p[j, :] = 0.5 * (p_n_plus_half + p_n_minus_half)
         if j != nt-1:

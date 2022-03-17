@@ -18,7 +18,8 @@ cdef radFrict(void):
     return -1
 ''' # radiation reaction force is not implemented
 
-cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: EMF, t_span: tuple, nt: int):
+cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float,
+            field: EMF, t_span: tuple, nt: int):
     cdef:
     # integration segment
         np.ndarray time = np.linspace(t_span[0], t_span[1], nt)
@@ -53,7 +54,9 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: E
         p_n_minus_half = p_n_plus_half
         p_minus = np.add(p_n_minus_half, np.multiply(e, charge) * (dt / 2))
         tau = np.divide(np.multiply(h, charge), (mass * gamma(p_minus)) * (dt / 2))
-        p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau), 2 * np.divide(tau, (1 + np.dot(tau, tau)))) + np.multiply(e, charge) * (dt / 2)
+        p_n_plus_half = p_minus + np.cross(p_minus + np.cross(p_minus, tau),
+                                            2 * np.divide(tau, (1 + np.dot(tau, tau)))) \
+                                + np.multiply(e, charge) * (dt / 2)
 
         p[j, :] = 0.5 * (p_n_plus_half + p_n_minus_half)
         if j != nt-1:
@@ -62,7 +65,8 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: E
 
     return r, p, v, time
 
-cdef directional_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray, v: np.ndarray, time: np.ndarray, omg: np.ndarray):
+cpdef get_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray,
+                  v: np.ndarray, time: np.ndarray, omg: np.ndarray):
     cdef:
         int N = time.size
         int omgN = omg.size
@@ -110,6 +114,17 @@ cdef directional_spectre(theta: float, phi: float, q: float, m: float, r: np.nda
 
     return ansJ
 
+cpdef get_heatmap_data(phi: float, q: float, m: float, r: np.ndarray, v: np.ndarray,
+                    time: np.ndarray, omg_span: tuple, nomg: int, ntheta: int):
+    cdef:
+        np.ndarray omg = np.linspace(omg_span[0], omg_span[1], nomg)
+        np.ndarray theta = np.linspace(0, 2*np.pi, ntheta)
+        int i = 0
+
+        np.ndarray res = np.zeros((nomg, ntheta))
+    for i in range(0, ntheta-1, 1):
+        res[i, :] = get_spectre(theta[i], phi, q, m, r, v, time, omg)
+    return res
 
 #TODO: Limit interaction time by introducing external field envelope
 

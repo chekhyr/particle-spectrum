@@ -42,7 +42,7 @@ class EMF:
         return -1
 
 
-class Plotter:
+class Trajectory:
     def __init__(self, r: np.ndarray, p: np.ndarray, v: np.ndarray, t: np.ndarray):
         self.r = r
         self.p = p

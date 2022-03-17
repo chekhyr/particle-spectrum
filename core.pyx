@@ -46,7 +46,7 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: E
     r[1, :] = r[0, :] + dt * np.divide(p_n_plus_half, (mass * gamma(p_n_plus_half)))
 
 # main cycle
-    for j in range(1, nt, 1):
+    for j in range(1, nt-1, 1):
         e = field.e(r[j, :], time[j])
         h = field.h(r[j, :], time[j])
 
@@ -67,4 +67,3 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: E
 #TODO: Add function to find integrated emission spectrum into a given angle
 
 #TODO: Add function to draw spectrum colormap for a given angle interval (all angles)
-

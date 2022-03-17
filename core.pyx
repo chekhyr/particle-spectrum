@@ -62,8 +62,55 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float, field: E
 
     return r, p, v, time
 
-#TODO: Limit interaction time by introducing external field envelope
+cdef directional_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray, v: np.ndarray, time: np.ndarray, omg: np.ndarray):
+    cdef:
+        int N = time.size
+        int omgN = omg.size
+        np.ndarray n = np.array([mt.sin(theta)*mt.cos(phi), mt.sin(theta)*mt.sin(phi), mt.cos(theta)])
+        double dt = time[1] - time[0]
 
-#TODO: Add function to find integrated emission spectrum into a given angle
+        np.ndarray Xi = np.zeros(N)
+        np.ndarray delXi = np.zeros(N-1)
+        np.ndarray avgXi = np.zeros(N-1)
+
+        np.ndarray delV = np.zeros((N-1, 3))
+        np.ndarray avgV = np.zeros((N-1, 3))
+
+        np.ndarray J
+        np.ndarray temp = np.zeros(3)
+        np.ndarray ansJ = np.zeros(omgN)
+
+    for i in range(0, N-1, 1):
+        Xi[i] = time[i] - np.dot(n, r[i, :])
+
+    for i in range(0, N-2, 1):
+        delXi[i] = Xi[i+1] - Xi[i]
+        avgXi[i] = 0.5 * (Xi[i] + Xi[i+1])
+        delV[i, :] = v[i+1, :] - v[i, :]
+        avgV[i, :] = 0.5 * (v[i+1, :] + v[i, :])
+
+    # Imaginary unit for exp()
+    j = 0+1j
+
+    # Main cycle
+    for k in range(0, omgN-1, 1):
+        J = np.zeros(3).astype(np.csingle)
+        # Single integral calculation
+        for i in range(0, N-2, 1):
+            J += np.exp(j*omg[k]*avgXi[i]) * (dt/delXi[i]) * (
+                2*mt.sin(0.5*omg[k]*delXi[i]) * avgV[i, :]
+                + j*delV[i, :] * (
+                    mt.sin(0.5*omg[k]*delXi[i]) / (0.5*omg[k]*delXi[i])
+                    - mt.cos(0.5*omg[k]*delXi[i]))
+            )
+
+        # dE/dOmega
+        temp = np.cross(n, np.cross(n, J))
+        ansJ[k] = q**2 * omg[k] / (4*np.pi**2) * np.dot(temp, temp).real
+
+    return ansJ
+
+
+#TODO: Limit interaction time by introducing external field envelope
 
 #TODO: Add function to draw spectrum colormap for a given angle interval (all angles)

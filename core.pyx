@@ -1,7 +1,6 @@
 # cython: language_level=3str
 
 import numpy as np
-import cython
 cimport numpy as np
 import math as mt
 from classes import EMF

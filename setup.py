@@ -3,7 +3,7 @@ from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy
 
-ext_modules = [
+extensions = [
     Extension(
         'core',
         ['core.pyx'],
@@ -15,5 +15,5 @@ ext_modules = [
 
 
 setup(
-    ext_modules=cythonize(ext_modules)
+    ext_modules=cythonize(extensions)
 )

@@ -16,5 +16,5 @@ tspan = (0., 1000.)
 nt = 100
 
 ans = boris(p0, x0, e, m, objEMF, tspan, nt)
-objTrj = Trajectory(ans[0], ans[1], ans[2], ans[3])
-objTrj.space()
+objTrj = Trajectory(ans[0], ans[3])
+objTrj.involute()

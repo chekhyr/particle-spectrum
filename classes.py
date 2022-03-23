@@ -37,56 +37,65 @@ class EMF:
         self.e = e
         self.h = h
 
-    def init_gauss():
+    def init_gauss(self):
         print('err: Gaussian beam not implemented')
         return -1
 
 
 class Trajectory:
-    def __init__(self, r: np.ndarray, p: np.ndarray, v: np.ndarray, t: np.ndarray):
-        self.r = r
-        self.p = p
-        self.v = v
+    def __init__(self, x, t):
+        self.x = x
         self.t = t
+        mpl.use('QtCairo')
 
     def space(self):
-        mpl.use('Qt5Agg')
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
-        z = self.r[:, 2]
-        y = self.r[:, 1]
-        x = self.r[:, 0]
+
+        z = self.x[:, 2]
+        y = self.x[:, 1]
+        x = self.x[:, 0]
+
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
+
         ax.plot3D(x, y, z)
+
+        plt.tight_layout()
         plt.show()
 
     def planes(self):
-        z = self.r[:, 2]
-        y = self.r[:, 1]
-        x = self.r[:, 0]
+        z = self.x[:, 2]
+        y = self.x[:, 1]
+        x = self.x[:, 0]
+
         plt.subplot(2, 2, 1)
         plt.plot(x, y)
         plt.title("xy", loc='left', y=0.85)
         plt.grid()
+
         plt.subplot(2, 2, 2)
         plt.plot(x, z)
         plt.title("xz", loc='left', y=0.85)
         plt.grid()
+
         plt.subplot(2, 2, 3)
         plt.plot(y, z)
         plt.title("yz", loc='left', y=0.85)
         plt.grid()
+
+        plt.tight_layout()
         plt.show()
 
-    def time(self):
-        fig = plt.figure()
-        ax = fig.add_subplot()
-        leg = ['t', ['x', 'y', 'z']]
-        for i in range(3):
-            plt.plot(self.t[:], self.r[:, i], label=leg[1][i])
-        ax.set_xlabel(leg[0])
+    def involute(self):
+        plt.plot(self.t[:], self.x[:, 0], label='x')
+        plt.plot(self.t[:], self.x[:, 1], label='y')
+        plt.plot(self.t[:], self.x[:, 2], label='z')
+
+        plt.xlabel('t')
         plt.grid()
         plt.legend()
+
+        plt.tight_layout()
         plt.show()

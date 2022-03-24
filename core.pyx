@@ -1,7 +1,7 @@
 # cython: language_level=3str
 
-import numpy as np
-cimport numpy as np
+import numpy as np # to use numpy methods
+cimport numpy as np # to convert numpy into c
 import math as mt
 from classes import EMF
 

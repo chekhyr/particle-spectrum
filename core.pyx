@@ -3,6 +3,9 @@ import numpy as np # to use numpy methods
 import math as mt
 from classes import EMF
 
+cimport numpy as np # to convert numpy into c
+
+
 cdef gamma(p: np.ndarray[3]):
     return mt.sqrt(1. + p.dot(p))
 

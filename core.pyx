@@ -1,4 +1,4 @@
-# cython: language_level=3str
+# cython: language_level=3str, boundscheck=False, wraparound=False
 import numpy as np # to use numpy methods
 from classes import EMF
 
@@ -19,16 +19,6 @@ electron.m = 1
 electron.x0 = (0, 1, 0)
 electron.p0 = (1, 0, 1)
 
-cdef double norm(double[:] vec):
-    if vec.shape[0] != 3:
-        raise TypeError
-
-    cdef double res = 0
-    for i in range(3):
-        res += pow(vec[i], 2)
-    res = sqrt(res)
-    return res
-
 cdef double dot(double[:] vec1, double[:] vec2):
     if vec1.shape[0] != 3 or vec2.shape[0] != 3:
         raise TypeError
@@ -38,16 +28,17 @@ cdef double dot(double[:] vec1, double[:] vec2):
         res += vec1[i]*vec2[i]
     return res
 
-cdef double cross(double[:] vec1, double[:] vec2, int j):
+cdef (double, double, double) cross(double[:] vec1, double[:] vec2):
     if vec1.shape[0] != 3 or vec2.shape[0] != 3:
         raise TypeError
 
-    if j == 0:
-        return vec1[1] * vec2[2] - vec1[2] * vec2[1]
-    elif j == 1:
-        return vec1[2] * vec2[0] - vec1[0] * vec2[2]
-    elif j == 2:
-        return vec1[0] * vec2[1] - vec1[1] * vec2[0]
+    cdef double[3] res
+
+    res[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1]
+    res[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2]
+    res[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0]
+
+    return (res[0], res[1], res[2])
 
 cdef double gamma(double[:] p):
     return sqrt(1. + dot(p, p))
@@ -60,7 +51,6 @@ cdef double gamma(double[:] p):
 cdef radFrict(void):
     return -1
 ''' # radiation reaction force is not implemented
-ctypedef span
 
 cpdef boris(Particle ptcl, EMF field, (double, double) t_span, int nt):
     cdef:

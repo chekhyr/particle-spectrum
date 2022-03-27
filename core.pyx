@@ -7,18 +7,21 @@ from libc.math cimport sin, cos, sqrt, pow
 cdef double pi = np.pi
 
 ctypedef struct Particle:
-    double e
+    double q
     double m
     double[3] x0
     double[3] p0
 
 cdef Particle ptcl
-ptcl.e = 1
+ptcl.q = 1
 ptcl.m = 1
 ptcl.x0 = (0, 1, 0)
 ptcl.p0 = (1, 0, 1)
 
 cdef double norm(double[:] vec):
+    if vec.shape[0] != 3:
+        raise TypeError
+
     cdef double res = 0
     for i in range(3):
         res += pow(vec[i], 2)
@@ -26,64 +29,24 @@ cdef double norm(double[:] vec):
     return res
 
 cdef double dot(double[:] vec1, double[:] vec2):
+    if vec1.shape[0] != 3 or vec2.shape[0] != 3:
+        raise TypeError
+
     cdef double res = 0
     for i in range(3):
         res += vec1[i]*vec2[i]
     return res
 
-cdef double cross(double[3] vec1, double[3] vec2, int j):
+cdef double cross(double[:] vec1, double[:] vec2, int j):
+    if vec1.shape[0] != 3 or vec2.shape[0] != 3:
+        raise TypeError
+
     if j == 1:
         return vec1[2] * vec2[3] - vec1[3] * vec2[2]
     elif j == 2:
         return vec1[3] * vec2[1] - vec1[1] * vec2[3]
     elif j == 3:
         return vec1[1] * vec2[2] - vec1[2] * vec2[1]
-
-cdef class EMF:
-    cdef:
-        char* par
-
-    def __init__(self, char* par):
-        self.par = par
-
-    def efield(self, x, t, j):
-        if self.par == b'const':
-            if j == 2 or j == 1 or j == 0:
-                return 0
-            else:
-                raise IndexError
-        elif self.par == b'wave':
-            raise NotImplementedError
-        elif self.par == b'gauss':
-            raise NotImplementedError
-
-    def hfield(self, x, t, j):
-        if self.par == b'const':
-            if j==2:
-                return 1
-            elif j==1 or j==0:
-                return 0
-            else:
-                raise IndexError
-        elif self.par == b'wave':
-            omg = 1.
-            k = np.array((0., 0., 1.), dtype=np.double)
-            alph = 0.
-            if j==0:
-                return cos(omg * t - dot(k, x) + alph)
-            elif j==1:
-                return sin(omg * t - dot(k, x) + alph)
-            elif j == 2:
-                return 0
-            else:
-                raise IndexError
-        elif self.par == b'gauss':
-            raise NotImplementedError
-
-objEMF = EMF(b'wave')
-print(type(objEMF.hfield(np.array((1, 5, 12), dtype=np.double), 100, 1)))
-
-
 
 cdef double gamma(double[:] p):
     return sqrt(1. + dot(p, p))

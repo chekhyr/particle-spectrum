@@ -8,7 +8,7 @@ from libc.math cimport sin, cos, sqrt
 
 cdef double pi = np.pi
 cdef enum:
-    nt = 100
+    nt = 500
 
 ctypedef struct Particle:
     double q
@@ -23,12 +23,12 @@ cdef double dot(double[:] vec1, double[:] vec2):
     return res
 
 cdef double cross(double[:] vec1, double[:] vec2, int j):
-    if j == 1:
-        return vec1[2] * vec2[3] - vec1[3] * vec2[2]
-    elif j == 2:
-        return vec1[3] * vec2[1] - vec1[1] * vec2[3]
-    elif j == 3:
+    if j == 0:
         return vec1[1] * vec2[2] - vec1[2] * vec2[1]
+    elif j == 1:
+        return vec1[2] * vec2[0] - vec1[0] * vec2[2]
+    elif j == 2:
+        return vec1[0] * vec2[1] - vec1[1] * vec2[0]
 
 cdef class EMF:
     cdef:
@@ -115,16 +115,6 @@ cdef Trajectory boris(Particle ptcl, EMF field, (double, double) t_span):
         double p_minus[3]
         double tau[3]
 
-        double[:] p_n_plus_half_mv
-        double[:] p_n_minus_half_mv
-        double[:] p_minus_mv
-        double[:] tau_mv
-
-    p_n_plus_half_mv = p_n_plus_half
-    p_n_minus_half_mv = p_n_minus_half
-    p_minus_mv = p_minus
-    tau_mv = tau
-
 # initialization
     res.t = np.linspace(t_span[0], t_span[1], nt)
     dt = res.t[1] - res.t[0]
@@ -146,12 +136,6 @@ cdef Trajectory boris(Particle ptcl, EMF field, (double, double) t_span):
     cdef:
         double tmp1[3]
         double tmp2[3]
-
-        double[:] tmp1_mv
-        double[:] tmp2_mv
-
-    tmp1_mv = tmp1
-    tmp2_mv = tmp2
     for j in range(1, nt-1, 1):
         e_mv = field.e(x_mv[j, :], res.t[j])
         h_mv = field.h(x_mv[j, :], res.t[j])
@@ -160,18 +144,18 @@ cdef Trajectory boris(Particle ptcl, EMF field, (double, double) t_span):
         for i in range(3):
             p_minus[i] = p_n_minus_half[i] + e_mv[i] * ptcl.q * (dt / 2)
         for i in range(3):
-            tau[i] = h_mv[i] * ptcl.q / (ptcl.m * gamma(p_minus_mv[:]) * (dt / 2))
+            tau[i] = h_mv[i] * ptcl.q / (ptcl.m * gamma(p_minus) * (dt / 2))
         for i in range(3):
-            tmp1[i] = p_minus[i] + cross(p_minus_mv[:], tau_mv[:], i)
-            tmp2[i] = 2 * tau[i] / (1 + dot(tau_mv[:], tau_mv[:]))
+            tmp1[i] = p_minus[i] + cross(p_minus, tau, i)
+            tmp2[i] = 2 * tau[i] / (1 + dot(tau, tau))
         for i in range(3):
-            p_n_plus_half[i] = p_minus[i] + cross(tmp1_mv[:], tmp2_mv[:], i) + e_mv[i] * ptcl.q * (dt / 2)
+            p_n_plus_half[i] = p_minus[i] + cross(tmp1, tmp2, i) + e_mv[i] * ptcl.q * (dt / 2)
 
         for i in range(3):
             p_mv[j, i] = 0.5 * (p_n_plus_half[i] + p_n_minus_half[i])
         if j != nt-1:
             for i in range(3):
-                x_mv[j+1, i] = x_mv[j, i] + dt * p_n_plus_half[i] / (ptcl.m * gamma(p_n_plus_half_mv[:]))
+                x_mv[j+1, i] = x_mv[j, i] + dt * p_n_plus_half[i] / (ptcl.m * gamma(p_n_plus_half))
 
         for i in range(3):
             v_mv[j, i] = p_mv[j, i] / (ptcl.m * gamma(p_mv[j, :]))

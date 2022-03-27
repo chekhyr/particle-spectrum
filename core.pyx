@@ -42,12 +42,12 @@ cdef double cross(double[:] vec1, double[:] vec2, int j):
     if vec1.shape[0] != 3 or vec2.shape[0] != 3:
         raise TypeError
 
-    if j == 1:
-        return vec1[2] * vec2[3] - vec1[3] * vec2[2]
-    elif j == 2:
-        return vec1[3] * vec2[1] - vec1[1] * vec2[3]
-    elif j == 3:
+    if j == 0:
         return vec1[1] * vec2[2] - vec1[2] * vec2[1]
+    elif j == 1:
+        return vec1[2] * vec2[0] - vec1[0] * vec2[2]
+    elif j == 2:
+        return vec1[0] * vec2[1] - vec1[1] * vec2[0]
 
 cdef double gamma(double[:] p):
     return sqrt(1. + dot(p, p))

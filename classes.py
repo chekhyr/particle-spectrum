@@ -11,23 +11,28 @@ class EMF:
         self.e = None
         self.h = None
 
-    def init_const(self, ampl=1.):
+    def init_const(self):
+        ampl = np.double(1)
         def e(x, t):
-            return ampl * np.array([0., 0., 0.]).astype(np.double)
+            return ampl * np.array([0, 0, 0]).astype(np.double)
 
         def h(x, t):
-            return ampl * np.array([0., 0., 1.]).astype(np.double)
+            return ampl * np.array([0, 0, 1]).astype(np.double)
 
         self.e = e
         self.h = h
 
-    def init_wave(self, ampl=1., omg=1., k=(0., 0., 1.), alph=0.):
-        _k = np.array(k).astype(np.double)
-        _k = _k / np.sqrt(_k.dot(_k))
+    def init_wave(self):
+        ampl = np.double(1)
+        omg = np.double(1)
+        k = np.array([0., 0., 1.]).astype(np.double)
+        alph = np.double(0)
+
+        k = k / np.sqrt(k.dot(k))
 
         def e(x, t):
-            ex = ampl * math.cos(omg * t - np.dot(_k, x) + alph)
-            ey = ampl * math.sin(omg * t - np.dot(_k, x) + alph)
+            ex = ampl * math.cos(omg * t - np.dot(k, x) + alph)
+            ey = ampl * math.sin(omg * t - np.dot(k, x) + alph)
             ez = 0
             return np.array([ex, ey, ez]).astype(np.double)
 

@@ -1,23 +1,102 @@
 # cython: language_level=3str
 import numpy as np # to use numpy methods
-import math as mt
-from classes import EMF
 
 cimport numpy as np # to convert numpy into c
+from libc.math cimport sin, cos, sqrt, pow
+
+cdef double pi = np.pi
+
+ctypedef struct Particle:
+    double e
+    double m
+    double[3] x0
+    double[3] p0
+
+cdef Particle ptcl
+ptcl.e = 1
+ptcl.m = 1
+ptcl.x0 = (0, 1, 0)
+ptcl.p0 = (1, 0, 1)
+
+cdef double norm(double[:] vec):
+    cdef double res = 0
+    for i in range(3):
+        res += pow(vec[i], 2)
+    res = sqrt(res)
+    return res
+
+cdef double dot(double[:] vec1, double[:] vec2):
+    cdef double res = 0
+    for i in range(3):
+        res += vec1[i]*vec2[i]
+    return res
+
+cdef double cross(double[3] vec1, double[3] vec2, int j):
+    if j == 1:
+        return vec1[2] * vec2[3] - vec1[3] * vec2[2]
+    elif j == 2:
+        return vec1[3] * vec2[1] - vec1[1] * vec2[3]
+    elif j == 3:
+        return vec1[1] * vec2[2] - vec1[2] * vec2[1]
+
+cdef class EMF:
+    cdef:
+        char* par
+
+    def __init__(self, char* par):
+        self.par = par
+
+    def efield(self, x, t, j):
+        if self.par == b'const':
+            if j == 2 or j == 1 or j == 0:
+                return 0
+            else:
+                raise IndexError
+        elif self.par == b'wave':
+            raise NotImplementedError
+        elif self.par == b'gauss':
+            raise NotImplementedError
+
+    def hfield(self, x, t, j):
+        if self.par == b'const':
+            if j==2:
+                return 1
+            elif j==1 or j==0:
+                return 0
+            else:
+                raise IndexError
+        elif self.par == b'wave':
+            omg = 1.
+            k = np.array((0., 0., 1.), dtype=np.double)
+            alph = 0.
+            if j==0:
+                return cos(omg * t - dot(k, x) + alph)
+            elif j==1:
+                return sin(omg * t - dot(k, x) + alph)
+            elif j == 2:
+                return 0
+            else:
+                raise IndexError
+        elif self.par == b'gauss':
+            raise NotImplementedError
+
+objEMF = EMF(b'wave')
+print(type(objEMF.hfield(np.array((1, 5, 12), dtype=np.double), 100, 1)))
 
 
-cdef gamma(p: np.ndarray[3]):
-    return mt.sqrt(1. + p.dot(p))
 
-cdef lorentz(double q, np.ndarray v, np.ndarray e, np.ndarray h):
-    return q*(e + np.cross(v, h))
+cdef double gamma(double[:] p):
+    return sqrt(1. + dot(p, p))
+
+# cdef double lorentz(double q, double[3] v, double e, double h, int j):
+#    return q*(e[j] + cross(v, h, j))
 
 #TODO: Introduce reaction force and modify boris() accordingly
 '''
 cdef radFrict(void):
     return -1
 ''' # radiation reaction force is not implemented
-
+'''
 cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float,
             field: EMF, t_span: tuple, nt: int):
     cdef:
@@ -64,7 +143,9 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float,
         v[j, :] = np.divide(p[j, :], (mass * gamma(p[j, :])))
 
     return r, p, v, time
+'''
 
+'''
 cpdef get_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray,
                   v: np.ndarray, time: np.ndarray, omg: np.ndarray):
     cdef:
@@ -125,6 +206,7 @@ cpdef get_heatmap_data(phi: float, q: float, m: float, r: np.ndarray, v: np.ndar
     for i in range(0, ntheta-1, 1):
         res[i, :] = get_spectre(theta[i], phi, q, m, r, v, time, omg)
     return res
+'''
 
 #TODO: Limit interaction time by introducing external field envelope
 

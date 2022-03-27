@@ -1,5 +1,6 @@
 # cython: language_level=3str
 import numpy as np # to use numpy methods
+from classes import EMF
 
 cimport numpy as np # to convert numpy into c
 from libc.math cimport sin, cos, sqrt, pow
@@ -12,11 +13,11 @@ ctypedef struct Particle:
     double[3] x0
     double[3] p0
 
-cdef Particle ptcl
-ptcl.q = 1
-ptcl.m = 1
-ptcl.x0 = (0, 1, 0)
-ptcl.p0 = (1, 0, 1)
+cdef Particle electron
+electron.q = 1
+electron.m = 1
+electron.x0 = (0, 1, 0)
+electron.p0 = (1, 0, 1)
 
 cdef double norm(double[:] vec):
     if vec.shape[0] != 3:
@@ -59,9 +60,9 @@ cdef double gamma(double[:] p):
 cdef radFrict(void):
     return -1
 ''' # radiation reaction force is not implemented
-'''
-cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float,
-            field: EMF, t_span: tuple, nt: int):
+ctypedef span
+
+cpdef boris(Particle ptcl, EMF field, (double, double) t_span, int nt):
     cdef:
     # integration segment
         np.ndarray time = np.linspace(t_span[0], t_span[1], nt)
@@ -106,7 +107,6 @@ cpdef boris(p0: np.ndarray, x0: np.ndarray, charge: float, mass: float,
         v[j, :] = np.divide(p[j, :], (mass * gamma(p[j, :])))
 
     return r, p, v, time
-'''
 
 '''
 cpdef get_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray,

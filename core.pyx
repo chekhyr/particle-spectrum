@@ -8,7 +8,7 @@ from libc.math cimport sin, cos, sqrt
 
 cdef double pi = np.pi
 cdef enum:
-    nt = 500
+    nt = 10000
 
 ctypedef struct Particle:
     double q
@@ -33,66 +33,68 @@ cdef double cross(double[:] vec1, double[:] vec2, int j):
 cdef class EMF:
     cdef:
         char* par
-        double[:] k_mv
+        double k[3]
+        double tmp[3]
+        double omg
+        double alph
 
     def __init__(self, char* par):
         self.par = par
-        k_mv = np.ndarray((0, 0, 1), dtype=np.double)
-        #self.k_mv = np.divide(k, np.sqrt(k.dot(k)))
+        if self.par != b'const':
+            k = (0, 0, 1)
+            omg = 1
+            alph = 0
 
-    def e(self, x, t):
-        res = [0, 0, 0]
-
+    cdef double e(self, x, t, j):
         if self.par == b'const':
-            for i in range(3):
-                res[i] = 0
+            return 0
 
         elif self.par == b'wave':
-            omg = 1.
-            alph = 0.
-
-            res[0] = cos(omg * t - dot(self.k_mv, x) + alph)
-            res[1] = sin(omg * t - dot(self.k_mv, x) + alph)
-            res[2] = 0
+            if j == 0:
+                return cos(self.omg * t - dot(self.k, x) + self.alph)
+            elif j==1:
+                return sin(self.omg * t - dot(self.k, x) + self.alph)
+            elif j==2:
+                return 0
 
         elif self.par == b'gauss':
             raise NotImplementedError
 
-        return np.array((res[0], res[1], res[2]), dtype=np.double)
 
-    def h(self, x, t):
-        res = [0, 0, 0]
+    cdef double h(self, x, t, j):
 
         if self.par == b'const':
-            for i in range(2):
-                res[i] = 0
+            if j==2:
+                return 1
             else:
-                res[2] = 1
+                return 0
 
         elif self.par == b'wave':
-            res[:] = np.cross(self.e(x, t), self.k_mv)
+            for i in range(3):
+                self.tmp[i] = self.e(x, t, i)
+            return cross(self.tmp, self.k, j)
 
         elif self.par == b'gauss':
             raise NotImplementedError
-
-        return np.array((res[0], res[1], res[2]), dtype=np.double)
 
 cdef double gamma(double[:] p):
     return sqrt(1. + dot(p, p))
 
+'''
 cdef lorentz(double q, double[:] v, double[:] e, double[:] h, int j):
     return q*(e[j] + cross(v, h, j))
+''' # deprecated
 
 #TODO: Introduce reaction force and modify boris() accordingly
 '''
 cdef radFrict(void):
     return -1
 ''' # radiation reaction force is not implemented
+
 ctypedef struct Trajectory:
     double t[nt]
     double x[nt][3]
     double p[nt][3]
-    double v[nt][3]
 
 cdef Trajectory boris(Particle ptcl, EMF field, (double, double) t_span):
     cdef:
@@ -101,19 +103,23 @@ cdef Trajectory boris(Particle ptcl, EMF field, (double, double) t_span):
 
     # locals
         int i, j
-        double[:] e_mv
-        double[:] h_mv
-        double dt
+        double dt, temp = 0
 
-        double[:] t_mv = res.t
-        double[:, :] x_mv = res.x
         double[:, :] p_mv = res.p
-        double[:, :] v_mv = res.v
 
-        double p_n_plus_half[3]
-        double p_n_minus_half[3]
+
+        double p_plus[3]
         double p_minus[3]
+        double p_prime[3]
+
         double tau[3]
+        double sigma[3]
+
+        double xtmp[3]
+        double vtmp[3]
+
+        double currE[3]
+        double currH[3]
 
 # initialization
     res.t = np.linspace(t_span[0], t_span[1], nt)
@@ -121,44 +127,39 @@ cdef Trajectory boris(Particle ptcl, EMF field, (double, double) t_span):
 
     res.x[0][:] = ptcl.x0
     res.p[0][:] = ptcl.p0
-    for i in range(3):
-        res.v[0][i] = ptcl.p0[i]/(ptcl.m*gamma(ptcl.p0))
-
-    e_mv = field.e(ptcl.x0, res.t[0])
-    h_mv = field.h(ptcl.x0, res.t[0])
 
 # main cycle
-    for i in range(3):
-        p_n_plus_half[i] = ptcl.p0[i] + (dt / 2) * lorentz(ptcl.q, v_mv[0, :], e_mv, h_mv, i)
-    for i in range(3):
-        x_mv[1, i] = x_mv[0, i] + dt * p_n_plus_half[i] / (ptcl.m * gamma(p_n_plus_half))
+    for i in range(1, nt, 1):
+        for j in range(3):
+            xtmp[j] = res.x[i-1][j]
+            currE[j] = field.e(xtmp, res.t[i], j)
+            currH[j] = field.h(xtmp, res.t[i], j)
 
-    cdef:
-        double tmp1[3]
-        double tmp2[3]
-    for j in range(1, nt-1, 1):
-        e_mv = field.e(x_mv[j, :], res.t[j])
-        h_mv = field.h(x_mv[j, :], res.t[j])
+        temp = dot(p_mv[i-1, :], p_mv[i-1, :])
+        for j in range(3):
+            tau[j] = currH[j] * dt / 2 / sqrt(1 + temp)
+        for j in range(3):
+            sigma[j] = 2 * tau[j] / (1 + dot(tau, tau))
+        for j in range(3):
+            p_minus[j] = res.p[i-1][j] + currE[j] * dt / 2
+        for j in range(3):
+            p_prime[j] = p_minus[j] + cross(p_minus, tau, j)
+        for j in range(3):
+            p_plus[j] = p_minus[j] + cross(p_prime, sigma, j)
+        for j in range(3):
+            res.p[i][j] = p_plus[j] + currE[j] * dt / 2
 
-        p_n_minus_half = p_n_plus_half
-        for i in range(3):
-            p_minus[i] = p_n_minus_half[i] + e_mv[i] * ptcl.q * (dt / 2)
-        for i in range(3):
-            tau[i] = h_mv[i] * ptcl.q / (ptcl.m * gamma(p_minus) * (dt / 2))
-        for i in range(3):
-            tmp1[i] = p_minus[i] + cross(p_minus, tau, i)
-            tmp2[i] = 2 * tau[i] / (1 + dot(tau, tau))
-        for i in range(3):
-            p_n_plus_half[i] = p_minus[i] + cross(tmp1, tmp2, i) + e_mv[i] * ptcl.q * (dt / 2)
-
-        for i in range(3):
-            p_mv[j, i] = 0.5 * (p_n_plus_half[i] + p_n_minus_half[i])
-        if j != nt-1:
-            for i in range(3):
-                x_mv[j+1, i] = x_mv[j, i] + dt * p_n_plus_half[i] / (ptcl.m * gamma(p_n_plus_half))
-
-        for i in range(3):
-            v_mv[j, i] = p_mv[j, i] / (ptcl.m * gamma(p_mv[j, :]))
+        for j in range(3):
+            vtmp[j] = (res.p[i][j] + res.p[i - 1][j]) / 2 / sqrt(1 + temp)
+        for j in range(3):
+            sigma[j] = currE[j] + cross(vtmp, currH, j)  # Lorentz force
+            K = (1 + temp) * 1.18 * 0.01 * (
+                    dot(sigma, sigma) - (dot(vtmp, sigma)) ** 2)  # letter К
+        #K = 0 # radiation == 0
+        for j in range(3):
+            res.p[i][j] = res.p[i][j] - dt * K * vtmp[j]
+        for j in range(3):
+            res.x[i][j] = res.x[i - 1][j] + res.p[i][j] * dt / sqrt(1 + temp)
 
     return res
 
@@ -226,12 +227,12 @@ cdef Particle ptcl
 ptcl.q = 1
 ptcl.m = 1
 ptcl.x0 = (0, 0, 0)
-ptcl.p0 = (0, 1, 1)
+ptcl.p0 = (0.1, 0, 1)
 
 objEMF = EMF(b'const')
 
 cdef Trajectory trj
-trj = boris(ptcl, objEMF, (0, 1000))
+trj = boris(ptcl, objEMF, (0, 600))
 cdef:
     double[:] t_mv
     double[:, :] x_mv
@@ -239,6 +240,8 @@ t_mv = trj.t
 x_mv = trj.x
 objPlt = Plots(x_mv, t_mv)
 objPlt.space()
+
+
 
 '''
 cpdef get_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray,

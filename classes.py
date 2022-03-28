@@ -12,12 +12,13 @@ class Particle:
         self.p0 = p0
 
 class EMF:
-    __slots__ = ['e', 'h', 'ampl']
+    __slots__ = ['e', 'h', 'ampl', 'omg']
 
     def __init__(self, ampl=1.):
         self.ampl = ampl
         self.e = None
         self.h = None
+        self.omg = None
 
     def init_const(self):
         const = self.ampl
@@ -29,10 +30,11 @@ class EMF:
 
         self.e = e
         self.h = h
+        self.omg = 0.
 
     def init_wave(self, k=(0., 0., 1.), alph=0.):
         _k = np.array(k).astype(np.double)
-        omg = _k.dot(_k) # N.B. c = 1
+        omg = self.omg = _k.dot(_k) # N.B. c = 1
         _k = _k / np.sqrt(omg)
 
         def e(x, t):

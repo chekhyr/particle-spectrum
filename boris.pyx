@@ -22,7 +22,7 @@ cdef double cross(double[:] vec1, double[:] vec2, int j):
 cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
     cdef:
         int i, j
-        double dt, temp = 0
+        double scaling, dt, temp = 0
 
         double p_plus[3]
         double p_minus[3]
@@ -71,11 +71,11 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         for j in range(3):
             vtmp[j] = (p[i, j] + p[i-1, j]) / 2 / sqrt(1 + temp)
         for j in range(3):
-            sigma[j] = ptcl.q * (currE[j] + cross(vtmp, currH, j))  # Lorentz force
-            K = (1 + temp) * 1.18 * 0.01 * (
-                    dot(sigma, sigma) - (dot(vtmp, sigma)) ** 2)  # letter К
-        if (rad == 0):
-            K = 0 # radiation == 0
+            sigma[j] = currE[j] + cross(vtmp, currH, j)  # Lorentz force
+            scaling = field.omg * ptcl.q**2 / ptcl.m
+            K = (1 + temp) * 0.0118 * scaling * (dot(sigma, sigma) - (dot(vtmp, sigma)) ** 2)  # letter K
+        if rad == 0:
+            K = 0
         for j in range(3):
             p[i, j] = p[i, j] - dt * K * vtmp[j]
         for j in range(3):

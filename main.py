@@ -12,12 +12,13 @@ m = 1.
 x0 = np.array([0, 0, 0]).astype(np.double)
 p0 = np.array([0.1, 0, 1]).astype(np.double)
 
-Radiation = True
+Radiation = 1
 
 
 objPtcl = Particle(q, m, x0, p0)
 objEMF = EMF()
-objEMF.init_const()
+#objEMF.init_const()
+objEMF.init_wave()
 
 trj = boris_routine(objPtcl, objEMF, t_span, nt, Radiation)
 

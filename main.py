@@ -12,7 +12,7 @@ m = 1.
 x0 = np.array([0, 0, 0]).astype(np.double)
 p0 = np.array([0.1, 0, 1]).astype(np.double)
 
-Radiation = 1
+Radiation = True
 
 
 objPtcl = Particle(q, m, x0, p0)

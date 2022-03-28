@@ -72,7 +72,7 @@ class Plots:
         ax.set_ylabel('y')
         ax.set_zlabel('z')
 
-        ax.plot3D(x, y, z)
+        ax.plot3D(x, y, z, color = 'hotpink')
 
         plt.tight_layout()
         plt.show()
@@ -83,17 +83,17 @@ class Plots:
         x = self.x[:, 0]
 
         plt.subplot(2, 2, 1)
-        plt.plot(x, y)
+        plt.plot(x, y, color = 'hotpink')
         plt.title("xy", loc='left', y=0.85)
         plt.grid()
 
         plt.subplot(2, 2, 2)
-        plt.plot(x, z)
+        plt.plot(x, z, color = 'hotpink')
         plt.title("xz", loc='left', y=0.85)
         plt.grid()
 
         plt.subplot(2, 2, 3)
-        plt.plot(y, z)
+        plt.plot(y, z, color = 'hotpink')
         plt.title("yz", loc='left', y=0.85)
         plt.grid()
 
@@ -101,9 +101,9 @@ class Plots:
         plt.show()
 
     def involute(self):
-        plt.plot(self.t[:], self.x[:, 0], label='x')
-        plt.plot(self.t[:], self.x[:, 1], label='y')
-        plt.plot(self.t[:], self.x[:, 2], label='z')
+        plt.plot(self.t[:], self.x[:, 0], label='x', c = 'pink')
+        plt.plot(self.t[:], self.x[:, 1], label='y', c = 'hotpink')
+        plt.plot(self.t[:], self.x[:, 2], label='z', c = 'magenta')
 
         plt.xlabel('t')
         plt.grid()

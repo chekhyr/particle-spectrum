@@ -5,11 +5,13 @@ from classes import Particle, EMF
 cimport numpy as np # to convert numpy into c
 from libc.math cimport sqrt
 
+
 cdef double dot(double[:] vec1, double[:] vec2):
     cdef double res = 0
     for i in range(3):
         res += vec1[i]*vec2[i]
     return res
+
 
 cdef double cross(double[:] vec1, double[:] vec2, int j):
     if j == 0:
@@ -18,6 +20,7 @@ cdef double cross(double[:] vec1, double[:] vec2, int j):
         return vec1[2] * vec2[0] - vec1[0] * vec2[2]
     elif j == 2:
         return vec1[0] * vec2[1] - vec1[1] * vec2[0]
+
 
 cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
     cdef:
@@ -81,71 +84,6 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         for j in range(3):
             x[i, j] = x[i-1, j] + p[i, j] * dt / sqrt(1 + temp)
 
-    return (t, x, p)
-
-'''
-cpdef get_spectre(theta: float, phi: float, q: float, m: float, r: np.ndarray,
-                  v: np.ndarray, time: np.ndarray, omg: np.ndarray):
-    cdef:
-        int N = time.size
-        int omgN = omg.size
-        np.ndarray n = np.array([mt.sin(theta)*mt.cos(phi), mt.sin(theta)*mt.sin(phi), mt.cos(theta)])
-        double dt = time[1] - time[0]
-
-        np.ndarray Xi = np.zeros(N)
-        np.ndarray delXi = np.zeros(N-1)
-        np.ndarray avgXi = np.zeros(N-1)
-
-        np.ndarray delV = np.zeros((N-1, 3))
-        np.ndarray avgV = np.zeros((N-1, 3))
-
-        np.ndarray J
-        np.ndarray temp = np.zeros(3)
-        np.ndarray ansJ = np.zeros(omgN)
-
-    for i in range(0, N-1, 1):
-        Xi[i] = time[i] - np.dot(n, r[i, :])
-
-    for i in range(0, N-2, 1):
-        delXi[i] = Xi[i+1] - Xi[i]
-        avgXi[i] = 0.5 * (Xi[i] + Xi[i+1])
-        delV[i, :] = v[i+1, :] - v[i, :]
-        avgV[i, :] = 0.5 * (v[i+1, :] + v[i, :])
-
-    # Imaginary unit for exp()
-    j = 0+1j
-
-    # Main cycle
-    for k in range(0, omgN-1, 1):
-        J = np.zeros(3).astype(np.csingle)
-        # Single integral calculation
-        for i in range(0, N-2, 1):
-            J += np.exp(j*omg[k]*avgXi[i]) * (dt/delXi[i]) * (
-                2*mt.sin(0.5*omg[k]*delXi[i]) * avgV[i, :]
-                + j*delV[i, :] * (
-                    mt.sin(0.5*omg[k]*delXi[i]) / (0.5*omg[k]*delXi[i])
-                    - mt.cos(0.5*omg[k]*delXi[i]))
-            )
-
-        # dE/dOmega
-        temp = np.cross(n, np.cross(n, J))
-        ansJ[k] = q**2 * omg[k] / (4*np.pi**2) * np.dot(temp, temp).real
-
-    return ansJ
-
-cpdef get_heatmap_data(phi: float, q: float, m: float, r: np.ndarray, v: np.ndarray,
-                    time: np.ndarray, omg_span: tuple, nomg: int, ntheta: int):
-    cdef:
-        np.ndarray omg = np.linspace(omg_span[0], omg_span[1], nomg)
-        np.ndarray theta = np.linspace(0, 2*np.pi, ntheta)
-        int i = 0
-
-        np.ndarray res = np.zeros((nomg, ntheta))
-    for i in range(0, ntheta-1, 1):
-        res[i, :] = get_spectre(theta[i], phi, q, m, r, v, time, omg)
-    return res
-'''
+    return t, x, p
 
 #TODO: Limit interaction time by introducing external field envelope
-
-#TODO: Add function to draw spectrum colormap for a given angle interval (all angles)

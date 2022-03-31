@@ -74,7 +74,8 @@ class PlotIntensity:
     def draw(self):
         plt.plot(self.omg, self.J, label='J', c='hotpink')
 
-        plt.xlabel('\omega')
+        plt.xlabel('ω')
+        plt.ylabel('J')
         plt.grid()
         #plt.legend()
 

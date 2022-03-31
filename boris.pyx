@@ -1,4 +1,4 @@
-# cython: language_level=3str, boundscheck=False, wraparound=False, cdivision=True
+# cython: language_level=3str, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
 import numpy as np # to use numpy methods
 from classes import Particle, EMF
 
@@ -25,7 +25,7 @@ cdef double cross(double[:] vec1, double[:] vec2, int j):
 cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
     cdef:
         int i, j
-        double scaling, dt, temp = 0
+        double scaling, K, dt, temp = 0
 
         double p_plus[3]
         double p_minus[3]
@@ -48,7 +48,9 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
     t = np.linspace(t_span[0], t_span[1], nt)
     x = np.zeros((nt, 3), dtype=np.double)
     p = np.zeros((nt, 3), dtype=np.double)
+
     dt = t[1] - t[0]
+    scaling = field.omg * ptcl.q ** 2 / ptcl.m
 
     x[0, :] = ptcl.x0
     p[0, :] = ptcl.p0
@@ -59,11 +61,11 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
 # main cycle
     for i in range(1, nt, 1):
         for j in range(3):
-            xtmp[j] = x[i-1, j]
+            xtmp[j] = x_mv[i-1, j]
             currE[j] = field.e(xtmp, t[i])[j]
             currH[j] = field.h(xtmp, t[i])[j]
 
-        temp = p[i-1, :].dot(p[i-1, :])
+        temp = p_mv[i-1, :].dot(p_mv[i-1, :])
         for j in range(3):
             tau[j] = currH[j] * dt / 2 / sqrt(1 + temp)
         for j in range(3):
@@ -81,7 +83,6 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
             vtmp[j] = (p_mv[i, j] + p_mv[i-1, j]) / 2 / sqrt(1 + temp)
         for j in range(3):
             sigma[j] = currE[j] + cross(vtmp, currH, j)  # Lorentz force
-            scaling = field.omg * ptcl.q**2 / ptcl.m
             K = (1 + temp) * 0.0118 * scaling * (dot(sigma, sigma) - (dot(vtmp, sigma)) ** 2)  # letter K
         if rad == 0:
             K = 0

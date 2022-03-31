@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from boris import boris_routine
-from intencity import intencity_integral
+from intensity import intensity_integral
 from classes import Plots, EMF, Particle, Intensity_plot
 import numpy as np
 

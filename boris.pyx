@@ -1,18 +1,28 @@
 # cython: language_level=3str, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
 import numpy as np # to use numpy methods
-from classes import Particle
+
 cimport numpy as np # to convert numpy into c
 from libc.math cimport sqrt, sin, cos
+from cython.parallel import prange
 
 
-cdef double dot(double[:] vec1, double[:] vec2):
+cdef class Particle:
+
+    def __init__(self, double q, double m, double[:] x0, double[:] p0):
+        self.q = q
+        self.m = m
+        self.x0 = x0
+        self.p0 = p0
+
+
+cdef double dot(double[:] vec1, double[:] vec2) nogil:
     cdef double res = 0
     for i in range(3):
         res += vec1[i]*vec2[i]
     return res
 
 
-cdef double cross(double[:] vec1, double[:] vec2, int j):
+cdef double cross(double[:] vec1, double[:] vec2, int j) nogil:
     if j == 0:
         return vec1[1] * vec2[2] - vec1[2] * vec2[1]
     elif j == 1:
@@ -20,70 +30,56 @@ cdef double cross(double[:] vec1, double[:] vec2, int j):
     elif j == 2:
         return vec1[0] * vec2[1] - vec1[1] * vec2[0]
 
+
 cdef class EMF:
-    cdef:
-        char* par
-        double omg
-        double alph
-        double k[3]
 
-        double[:] k_mv
-
-    def __init__(self, char* par):
+    def __init__(self, int par):
         self.par = par
         self.k = (0, 0, 1)
         self.k_mv = self.k
-        if self.par == b'const':
+        if self.par == 0:
             self.omg = 0
-        elif self.par == b'wave':
+        elif self.par == 1:
             self.alph = 0
-            self.omg = dot(self.k_mv, self.k_mv)
+            self.omg = sqrt(dot(self.k_mv, self.k_mv))
             for i in range(3):
-                self.k[i] /= sqrt(self.omg)
+                self.k[i] /= self.omg
 
 
-    cdef double e(self, double[:] x, double t, j):
-        cdef:
-            double res
+    cdef double e(self, double[:] x, double t, int j) nogil:
+        cdef double res
 
-        if self.par == b'const':
+        if self.par == 0:
             res = 0
-
-        elif self.par == b'wave':
+        elif self.par == 1:
             if j == 0:
                 res = cos(self.omg * t - dot(self.k_mv, x) + self.alph)
             elif j == 1:
                 res = sin(self.omg * t - dot(self.k_mv, x) + self.alph)
             elif j == 2:
                 res = 0
-
-        elif self.par == b'gauss':
+        elif self.par == 3:
             raise NotImplementedError
 
         return res
 
-    cdef double h(self, double[:] x, double t, j):
-        cdef:
-            double res
-            double tmp[3]
+    cdef double h(self, double[:] x, double t, int j) nogil:
+        cdef double res
 
-            double[:] tmp_mv
-
-        for i in range(3):
-            tmp[i] = self.e(x, t, i)
-        tmp_mv = tmp
-
-        if self.par == b'const':
+        if self.par == 0:
             if j == 0 or j == 1:
                 res = 0
             elif j == 2:
                 res = 1
-
-        elif self.par == b'wave':
-            for i in range(3):
-                res = cross(tmp_mv, self.k_mv, j)
-
-        elif self.par == b'gauss':
+        elif self.par == 1:
+            if j == 0:
+                res = -self.k_mv[2]*sin(self.omg * t - dot(self.k_mv, x) + self.alph)
+            elif j == 1:
+                res =  self.k_mv[2]*cos(self.omg * t - dot(self.k_mv, x) + self.alph)
+            elif j == 2:
+                res = self.k_mv[0]*sin(self.omg * t - dot(self.k_mv, x) + self.alph) \
+                      - self.k_mv[1]*cos(self.omg * t - dot(self.k_mv, x) + self.alph)
+        elif self.par == 3:
             raise NotImplementedError
 
         return res
@@ -91,7 +87,7 @@ cdef class EMF:
 
 cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
     cdef:
-        int i, j, swtch
+        int i, j, swtch, stp
         double scaling, K, dt, temp = 0
 
         double p_plus[3]
@@ -111,15 +107,18 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         double[:, :] x_mv
         double[:, :] p_mv
         double[:, :] v_mv
-        double[:] tau_mv
-        double[:] sigma_mv
-        double[:] xtmp_mv
+
         double[:] p_minus_mv
         double[:] p_prime_mv
+
+        double[:] tau_mv
+        double[:] sigma_mv
+
+        double[:] xtmp_mv
         double[:] vtmp_mv
+
         double[:] currE_mv
         double[:] currH_mv
-
 
 # initialization
     t = np.linspace(t_span[0], t_span[1], nt)
@@ -127,6 +126,7 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
     p = np.zeros((nt, 3), dtype=np.double)
     v = np.zeros((nt, 3), dtype=np.double)
     swtch = rad
+    stp = nt
 
     t_mv = t
     x_mv = x
@@ -140,17 +140,17 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
     x[0, :] = ptcl.x0
     p[0, :] = ptcl.p0
 
+    p_minus_mv = p_minus
+    p_prime_mv = p_prime
     tau_mv = tau
     sigma_mv = sigma
     xtmp_mv = xtmp
     vtmp_mv = vtmp
     currE_mv = currE
     currH_mv = currH
-    p_minus_mv = p_minus
-    p_prime_mv = p_prime
 
 # main cycle
-    for i in range(1, nt, 1):
+    for i in prange(1, stp, 1,  nogil=True, num_threads=1, schedule='static'):
         for j in range(3):
             xtmp_mv[j] = x_mv[i-1, j]
         for j in range(3):

@@ -3,62 +3,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
-
-class Particle:
-    __slots__ = ['q', 'm', 'x0', 'p0']
-
-    def __init__(self, q: float, m: float, x0: np.ndarray, p0: np.ndarray):
-        self.q = q
-        self.m = m
-        self.x0 = x0
-        self.p0 = p0
-
-'''
-class EMF:
-    __slots__ = ['e', 'h', 'ampl', 'omg']
-
-    def __init__(self, ampl=1.):
-        self.ampl = ampl
-        self.e = None
-        self.h = None
-        self.omg = None
-
-    def init_const(self):
-        const = self.ampl
-
-        def e(x, t):
-            return const * np.array([0., 0., 0.]).astype(np.double)
-
-        def h(x, t):
-            return const * np.array([0., 0., 1.]).astype(np.double)
-
-        self.e = e
-        self.h = h
-        self.omg = 0.
-
-    def init_wave(self, k=(0., 0., 1.), alph=0.):
-        _k = np.array(k).astype(np.double)
-        omg = self.omg = _k.dot(_k)  # N.B. c = 1
-        _k = _k / np.sqrt(omg)
-
-        def e(x, t):
-            ex = self.ampl * np.cos(omg * t - np.dot(_k, x) + alph)
-            ey = self.ampl * np.sin(omg * t - np.dot(_k, x) + alph)
-            ez = 0
-            return np.array([ex, ey, ez]).astype(np.double)
-
-        def h(x, t):
-            return np.cross(e(x, t), _k)
-
-        self.e = e
-        self.h = h
-
-    def init_gauss(self):
-        raise NotImplementedError
-''' # deprecated
-
-
-class Plots:
+class PlotTrajectory:
     __slots__ = ['x', 't']
 
     def __init__(self, t: np.ndarray, x: np.ndarray):

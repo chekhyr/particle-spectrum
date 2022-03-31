@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-from boris import boris_routine
+from boris import boris_routine, EMF
 from intensity import intensity_integral
-from classes import Plots, EMF, Particle, Intensity_plot
+from classes import Plots, Particle, PlotIntensity
 import numpy as np
 
 # Config
@@ -17,16 +17,16 @@ Radiation = True
 
 
 objPtcl = Particle(q, m, x0, p0)
-objEMF = EMF()
-#objEMF.init_const()
-objEMF.init_wave()
+objEMF = EMF(b'const')
 
 trj = boris_routine(objPtcl, objEMF, t_span, nt, Radiation)
 
-objPlt = Plots(trj[1], trj[0])
-#objPlt.space()
+objPlt = Plots(trj[0], trj[1])
+objPlt.space()
 
+'''
 nOmg = 10
 intns = intensity_integral(trj[0], trj[1], trj[2], nOmg)
-objIntns = Intensity_plot(intns[0], intns[1])
+objIntns = PlotIntensity(intns[0], intns[1])
 objIntns.draw()
+'''

@@ -3,6 +3,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 
+
 class Particle:
     __slots__ = ['q', 'm', 'x0', 'p0']
 
@@ -12,7 +13,7 @@ class Particle:
         self.x0 = x0
         self.p0 = p0
 
-
+'''
 class EMF:
     __slots__ = ['e', 'h', 'ampl', 'omg']
 
@@ -54,14 +55,15 @@ class EMF:
 
     def init_gauss(self):
         raise NotImplementedError
+''' # deprecated
 
 
 class Plots:
     __slots__ = ['x', 't']
 
-    def __init__(self, x: np.ndarray, t: np.ndarray):
-        self.x = x
+    def __init__(self, t: np.ndarray, x: np.ndarray):
         self.t = t
+        self.x = x
         mpl.use('QtCairo')
 
     def space(self):
@@ -116,7 +118,7 @@ class Plots:
         plt.tight_layout()
         plt.show()
 
-class Intensity_plot:
+class PlotIntensity:
     __slots__ = ['omg', 'J']
 
     def __init__(self, omg: np.ndarray, J: np.ndarray):

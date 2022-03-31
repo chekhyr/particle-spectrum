@@ -27,6 +27,6 @@ objPlt = Plots(trj[1], trj[0])
 #objPlt.space()
 
 nOmg = 10
-intns = intencity_integral(trj[0], trj[1], trj[2], nOmg)
+intns = intensity_integral(trj[0], trj[1], trj[2], nOmg)
 objIntns = Intensity_plot(intns[0], intns[1])
 objIntns.draw()

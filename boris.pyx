@@ -3,7 +3,6 @@ import numpy as np # to use numpy methods
 
 cimport numpy as np # to convert numpy into c
 from libc.math cimport sqrt, sin, cos
-from cython.parallel import prange
 
 
 cdef class Particle:
@@ -82,7 +81,6 @@ cdef class EMF:
 
         return res
 
-
 cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
     cdef:
         int i, j, swtch, stp
@@ -148,7 +146,7 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
     currH_mv = currH
 
 # main cycle
-    for i in prange(1, stp, 1,  nogil=True, num_threads=4, schedule='static'):
+    for i in range(1, stp, 1):
         for j in range(3):
             currE_mv[j] = field.e(x_mv[i-1, :], t_mv[i], j)
             currH_mv[j] = field.h(x_mv[i-1, :], t_mv[i], j)

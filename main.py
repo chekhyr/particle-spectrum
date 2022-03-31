@@ -6,7 +6,7 @@ import numpy as np
 
 # Config
 nt = 100000
-t_span = (0, 600)
+t_span = (0., 600.)
 
 q = 1.
 m = 1.
@@ -17,16 +17,16 @@ Radiation = True
 
 
 objPtcl = Particle(q, m, x0, p0)
-objEMF = EMF(1)
+objEMF = EMF(0)
 
 trj = boris_routine(objPtcl, objEMF, t_span, nt, Radiation)
 
 objPlt = PlotTrajectory(trj[0], trj[1])
 objPlt.space()
 
-'''
-nOmg = 10
-intns = intensity_integral(trj[0], trj[1], trj[2], nOmg)
+omg_span = (0., 8.)
+nOmg = 1000
+intns = intensity_integral(trj[0], trj[1], trj[2], trj[3], omg_span, nOmg)
+
 objIntns = PlotIntensity(intns[0], intns[1])
 objIntns.draw()
-'''

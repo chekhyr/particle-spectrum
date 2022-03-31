@@ -7,72 +7,107 @@ from libc.math cimport sqrt, sin, cos
 from boris cimport dot, cross
 
 
-cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, nparam: int):
+cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndarray, omg_span: tuple, nOmg: int):
     cdef:
-        int i, j, k
+        int i, j, k, stp
         double dt
         double n[3]
-        double vec1[3], vec2[3]
-        double vec3[3], vec4[3], vec5[3], vec6[3]
-        double ctX[3], ntX[3]
-        double ctV[3], ntV[3], dV[3], averV[3]
-        double ctXi, ntXi, dXi, averXi
-        double ctGamma, ntGamma
-        double ctTmp[3], ntTmp[3]
 
-        double[:, :] x_mv, p_mv
+        double vec1[3]
+        double vec2[3]
+        double vec3[3]
+        double vec4[3]
+        double vec5[3]
+        double vec6[3]
+
+        double ctXi, ntXi, dXi, averXi
+        double ctTmp[3]
+        double ntTmp[3]
+
+        double dV[3]
+        double averV[3]
+
+        double[:] n_mv
+        double[:] t_mv
+        double[:, :] x_mv
+        double[:, :] p_mv
+        double[:, :] v_mv
+
+        double[:] vec1_mv
+        double[:] vec2_mv
+        double[:] vec3_mv
+        double[:] vec4_mv
+        double[:] vec5_mv
+        double[:] vec6_mv
+
+        double[:] ctTmp_mv
+        double[:] ntTmp_mv
+
+        double[:] dV_mv
+        double[:] averV_mv
+
+        double[:] omg_mv
+        double[:] res_mv
 
     dt = t[1] - t[0]
     n = (1, 0, 0)
-    omega = np.linspace(0, 5, nparam)
-    res = np.zeros(nparam)
+    omg = np.linspace(omg_span[0], omg_span[1], nOmg)
+    res = np.zeros(nOmg)
 
+    n_mv = n
+    t_mv = t
     x_mv = x
     p_mv = p
+    v_mv = v
 
-    for i in range(1, nparam, 1):
+    vec1_mv = vec1
+    vec2_mv = vec2
+    vec3_mv = vec3
+    vec4_mv = vec4
+    vec5_mv = vec5
+    vec6_mv = vec6
+
+    ctTmp_mv = ctTmp
+    ntTmp_mv = ntTmp
+
+    dV_mv = dV
+    averV_mv = averV
+
+    omg_mv = omg
+    res_mv = res
+    stp = t.size - 1
+
+    for i in range(1, nOmg, 1):
         for k in range(3):
-            vec1[k] = 0
-            vec2[k] = 0
-        for j in range(t.size - 1):
-            for k in range(3):
-                ctX[k] = x_mv[j, k]
-                ntX[k] = x_mv[j+1, k]
-                ctV[k] = p_mv[j, k]
-                ntV[k] = p_mv[j+1, k]
-            ctXi = t[j] - dot(n, ctX)
-            ntXi = t[j+1] - dot(n, ntX)
+            vec1_mv[k] = 0
+            vec2_mv[k] = 0
+        for j in range(1, stp, 1):
+            ctXi = t_mv[j] - dot(n_mv, x_mv[j, :])
+            ntXi = t_mv[j+1] - dot(n_mv, x_mv[j+1, :])
             dXi = ntXi - ctXi
             averXi = 0.5*(ntXi + ctXi)
 
-            ctGamma = sqrt(1 + dot(n, ctX))
-            ntGamma = sqrt(1 + dot(n, ntX))
             for k in range(3):
-                ctV[k] /= ctGamma
-                ntV[k] /= ntGamma
+                dV[k] = v_mv[j+1, k] - v_mv[j, k]
+                averV[k] = 0.5*(v_mv[j+1, k] + v_mv[j, k])
             for k in range(3):
-                dV[k] = ntV[k] - ctV[k]
-                averV[k] = 0.5*(ntV[k] + ctV[k])
-            ctTmp = np.array((0, 0, 0))
-            ntTmp = np.array((0, 0, 0))
-            for k in range(3):
-                ctTmp[k] = cos(omega[i] * averXi) * dt / dXi * 2 * averV[k] * sin(omega[i] * dXi / 2)  # 1 часть
-                ctTmp[k] = ctTmp[k] - sin(omega[i] * averXi) * dt / dXi * dV[k] * (
-                            (sin(omega[i] * dXi / 2) / (omega[i] * dXi / 2)) - cos(omega[i] * dXi / 2))
+                ctTmp[k] = cos(omg_mv[i] * averXi) * dt / dXi * 2 * averV_mv[k] * sin(omg_mv[i] * dXi / 2)  # 1 часть
+                ctTmp[k] = ctTmp[k] - sin(omg_mv[i] * averXi) * dt / dXi * dV[k] * (
+                            (sin(omg_mv[i] * dXi / 2) / (omg_mv[i] * dXi / 2)) - cos(omg_mv[i] * dXi / 2))
 
-                ntTmp[k] = cos(omega[i] * averXi) * dt / dXi * dV[k] * (
-                            (sin(omega[i] * dXi / 2) / (omega[i] * dXi / 2)) - cos(omega[i] * dXi / 2))
-                ntTmp[k] = ntTmp[k] + sin(omega[i] * averXi) * dt / dXi * 2 * averV[k] * sin(omega[i] * dXi / 2)
+                ntTmp[k] = cos(omg_mv[i] * averXi) * dt / dXi * dV[k] * (
+                            (sin(omg_mv[i] * dXi / 2) / (omg_mv[i] * dXi / 2)) - cos(omg_mv[i] * dXi / 2))
+                ntTmp[k] = ntTmp[k] + sin(omg_mv[i] * averXi) * dt / dXi * 2 * averV_mv[k] * sin(omg_mv[i] * dXi / 2)
             for k in range(3):
-                vec1[k] = vec1[k] + ctTmp[k]
-                vec2[k] = vec2[k] + ntTmp[k]
+                vec1_mv[k] = vec1_mv[k] + ctTmp_mv[k]
+                vec2_mv[k] = vec2_mv[k] + ntTmp_mv[k]
 
         for k in range(3):
-            vec3[k] = cross(n, vec1, k)
-            vec4[k] = cross(n, vec2, k)
+            vec3_mv[k] = cross(n_mv, vec1_mv, k)
+            vec4_mv[k] = cross(n_mv, vec2_mv, k)
         for k in range(3):
-            vec5[k] = cross(n, vec3, k)
-            vec6[k] = cross(n, vec4, k)
+            vec5_mv[k] = cross(n_mv, vec3_mv, k)
+            vec6_mv[k] = cross(n_mv, vec4_mv, k)
 
-        res[i] = (dot(vec5, vec5) + dot(vec6, vec6)) * omega[i]
-    return omega, res
+        res_mv[i] = (dot(vec5_mv, vec5_mv) + dot(vec6_mv, vec6_mv)) * omg_mv[i]
+    return omg, res

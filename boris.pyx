@@ -114,7 +114,6 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         double[:] tau_mv
         double[:] sigma_mv
 
-        double[:] xtmp_mv
         double[:] vtmp_mv
 
         double[:] currE_mv
@@ -139,23 +138,22 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
 
     x[0, :] = ptcl.x0
     p[0, :] = ptcl.p0
+    for j in range(3):
+        v[0, j] = ptcl.p0[j] / sqrt(1+dot(p[0, :], p[0, :]))
 
     p_minus_mv = p_minus
     p_prime_mv = p_prime
     tau_mv = tau
     sigma_mv = sigma
-    xtmp_mv = xtmp
     vtmp_mv = vtmp
     currE_mv = currE
     currH_mv = currH
 
 # main cycle
-    for i in prange(1, stp, 1,  nogil=True, num_threads=1, schedule='static'):
+    for i in prange(1, stp, 1,  nogil=True, num_threads=4, schedule='static'):
         for j in range(3):
-            xtmp_mv[j] = x_mv[i-1, j]
-        for j in range(3):
-            currE_mv[j] = field.e(xtmp_mv, t_mv[i], j)
-            currH_mv[j] = field.h(xtmp_mv, t_mv[i], j)
+            currE_mv[j] = field.e(x_mv[i-1, :], t_mv[i], j)
+            currH_mv[j] = field.h(x_mv[i-1, :], t_mv[i], j)
 
         temp = dot(p_mv[i-1, :], p_mv[i-1, :])
         for j in range(3):
@@ -180,7 +178,9 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
             p_mv[i, j] = p_mv[i, j] - dt * K * vtmp[j]
         for j in range(3):
             x_mv[i, j] = x_mv[i-1, j] + p_mv[i, j] * dt / sqrt(1 + temp)
+        for j in range(3):
+            v_mv[i, j] = p_mv[i, j] / sqrt(1 + temp)
 
-    return t, x, p
+    return t, x, p, v
 
 #TODO: Limit interaction time by introducing external field envelope

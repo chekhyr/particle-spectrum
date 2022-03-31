@@ -7,7 +7,6 @@ from cython.parallel import prange
 
 
 cdef class Particle:
-
     def __init__(self, double q, double m, double[:] x0, double[:] p0):
         self.q = q
         self.m = m
@@ -32,7 +31,6 @@ cdef double cross(double[:] vec1, double[:] vec2, int j) nogil:
 
 
 cdef class EMF:
-
     def __init__(self, int par):
         self.par = par
         self.k = (0, 0, 1)
@@ -98,7 +96,7 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         double sigma[3]
 
         double xtmp[3]
-        double vtmp[3]
+        double averV[3]
 
         double currE[3]
         double currH[3]
@@ -114,7 +112,7 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         double[:] tau_mv
         double[:] sigma_mv
 
-        double[:] vtmp_mv
+        double[:] averV_mv
 
         double[:] currE_mv
         double[:] currH_mv
@@ -145,7 +143,7 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
     p_prime_mv = p_prime
     tau_mv = tau
     sigma_mv = sigma
-    vtmp_mv = vtmp
+    averV_mv = averV
     currE_mv = currE
     currH_mv = currH
 
@@ -170,12 +168,12 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
             p_mv[i, j] = p_plus[j] + currE[j] * dt / 2
 
         for j in range(3):
-            vtmp[j] = (p_mv[i, j] + p_mv[i-1, j]) / 2 / sqrt(1 + temp)
+            averV[j] = (p_mv[i, j] + p_mv[i-1, j]) / 2 / sqrt(1 + temp)
         for j in range(3):
-            sigma[j] = currE[j] + cross(vtmp_mv, currH_mv, j)  # Lorentz force
-            K = (1 + temp) * swtch * 0.0118 * scaling * (dot(sigma_mv, sigma_mv) - (dot(vtmp_mv, sigma_mv)) ** 2)  # letter K
+            sigma[j] = currE[j] + cross(averV_mv, currH_mv, j)  # Lorentz force (here array sigma is reused)
+            K = (1 + temp) * swtch * 0.0118 * scaling * (dot(sigma_mv, sigma_mv) - (dot(averV_mv, sigma_mv)) ** 2)  # letter K
         for j in range(3):
-            p_mv[i, j] = p_mv[i, j] - dt * K * vtmp[j]
+            p_mv[i, j] = p_mv[i, j] - dt * K * averV[j]
         for j in range(3):
             x_mv[i, j] = x_mv[i-1, j] + p_mv[i, j] * dt / sqrt(1 + temp)
         for j in range(3):

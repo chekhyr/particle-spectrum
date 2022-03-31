@@ -40,6 +40,9 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         double currE[3]
         double currH[3]
 
+        double[:, :] x_mv
+        double[:, :] p_mv
+
 
 # initialization
     t = np.linspace(t_span[0], t_span[1], nt)
@@ -49,6 +52,9 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
 
     x[0, :] = ptcl.x0
     p[0, :] = ptcl.p0
+
+    x_mv = x
+    p_mv = p
 
 # main cycle
     for i in range(1, nt, 1):
@@ -63,16 +69,16 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         for j in range(3):
             sigma[j] = 2 * tau[j] / (1 + dot(tau, tau))
         for j in range(3):
-            p_minus[j] = p[i-1, j] + currE[j] * dt / 2
+            p_minus[j] = p_mv[i-1, j] + currE[j] * dt / 2
         for j in range(3):
             p_prime[j] = p_minus[j] + cross(p_minus, tau, j)
         for j in range(3):
             p_plus[j] = p_minus[j] + cross(p_prime, sigma, j)
         for j in range(3):
-            p[i, j] = p_plus[j] + currE[j] * dt / 2
+            p_mv[i, j] = p_plus[j] + currE[j] * dt / 2
 
         for j in range(3):
-            vtmp[j] = (p[i, j] + p[i-1, j]) / 2 / sqrt(1 + temp)
+            vtmp[j] = (p_mv[i, j] + p_mv[i-1, j]) / 2 / sqrt(1 + temp)
         for j in range(3):
             sigma[j] = currE[j] + cross(vtmp, currH, j)  # Lorentz force
             scaling = field.omg * ptcl.q**2 / ptcl.m
@@ -80,9 +86,9 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
         if rad == 0:
             K = 0
         for j in range(3):
-            p[i, j] = p[i, j] - dt * K * vtmp[j]
+            p_mv[i, j] = p_mv[i, j] - dt * K * vtmp[j]
         for j in range(3):
-            x[i, j] = x[i-1, j] + p[i, j] * dt / sqrt(1 + temp)
+            x_mv[i, j] = x_mv[i-1, j] + p_mv[i, j] * dt / sqrt(1 + temp)
 
     return t, x, p
 

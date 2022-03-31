@@ -115,3 +115,21 @@ class Plots:
 
         plt.tight_layout()
         plt.show()
+
+class Intensity_plot:
+    __slots__ = ['omg', 'J']
+
+    def __init__(self, omg: np.ndarray, J: np.ndarray):
+        self.omg = omg
+        self.J = J
+        mpl.use('QtCairo')
+
+    def draw(self):
+        plt.plot(self.omg, self.J, label='J', c='hotpink')
+
+        plt.xlabel('\omega')
+        plt.grid()
+        #plt.legend()
+
+        plt.tight_layout()
+        plt.show()

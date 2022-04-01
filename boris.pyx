@@ -20,12 +20,12 @@ cdef double dot(double[:] vec1, double[:] vec2) nogil:
     return res
 
 
-cdef double cross(double[:] vec1, double[:] vec2, int j) nogil:
-    if j == 0:
+cdef double cross(double[:] vec1, double[:] vec2, int k) nogil:
+    if k == 0:
         return vec1[1] * vec2[2] - vec1[2] * vec2[1]
-    elif j == 1:
+    elif k == 1:
         return vec1[2] * vec2[0] - vec1[0] * vec2[2]
-    elif j == 2:
+    elif k == 2:
         return vec1[0] * vec2[1] - vec1[1] * vec2[0]
 
 
@@ -43,37 +43,37 @@ cdef class EMF:
                 self.k[i] /= self.omg
 
 
-    cdef double e(self, double[:] x, double t, int j) nogil:
+    cdef double e(self, double[:] x, double t, int k) nogil:
         cdef double res
 
         if self.par == 0:
             res = 0
         elif self.par == 1:
-            if j == 0:
+            if k == 0:
                 res = cos(self.omg * t - dot(self.k_mv, x) + self.alph)
-            elif j == 1:
+            elif k == 1:
                 res = sin(self.omg * t - dot(self.k_mv, x) + self.alph)
-            elif j == 2:
+            elif k == 2:
                 res = 0
         elif self.par == 3:
             raise NotImplementedError
 
         return res
 
-    cdef double h(self, double[:] x, double t, int j) nogil:
+    cdef double h(self, double[:] x, double t, int k) nogil:
         cdef double res
 
         if self.par == 0:
-            if j == 0 or j == 1:
+            if k == 0 or k == 1:
                 res = 0
-            elif j == 2:
+            elif k == 2:
                 res = 1
         elif self.par == 1:
-            if j == 0:
+            if k == 0:
                 res = -self.k_mv[2]*sin(self.omg * t - dot(self.k_mv, x) + self.alph)
-            elif j == 1:
+            elif k == 1:
                 res =  self.k_mv[2]*cos(self.omg * t - dot(self.k_mv, x) + self.alph)
-            elif j == 2:
+            elif k == 2:
                 res = self.k_mv[0]*sin(self.omg * t - dot(self.k_mv, x) + self.alph) \
                       - self.k_mv[1]*cos(self.omg * t - dot(self.k_mv, x) + self.alph)
         elif self.par == 3:
@@ -83,7 +83,7 @@ cdef class EMF:
 
 cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
     cdef:
-        int i, j, swtch, stp
+        int i, k, swtch, stp
         double scaling, K, dt, temp = 0
 
         double p_plus[3]
@@ -134,8 +134,8 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
 
     x[0, :] = ptcl.x0
     p[0, :] = ptcl.p0
-    for j in range(3):
-        v[0, j] = ptcl.p0[j] / sqrt(1+dot(p[0, :], p[0, :]))
+    for k in range(3):
+        v[0, k] = ptcl.p0[k] / sqrt(1+dot(p[0, :], p[0, :]))
 
     p_minus_mv = p_minus
     p_prime_mv = p_prime
@@ -147,35 +147,35 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
 
 # main cycle
     for i in range(1, stp, 1):
-        for j in range(3):
-            currE_mv[j] = field.e(x_mv[i-1, :], t_mv[i], j)
-            currH_mv[j] = field.h(x_mv[i-1, :], t_mv[i], j)
+        for k in range(3):
+            currE_mv[k] = field.e(x_mv[i-1, :], t_mv[i], k)
+            currH_mv[k] = field.h(x_mv[i-1, :], t_mv[i], k)
 
         temp = dot(p_mv[i-1, :], p_mv[i-1, :])
-        for j in range(3):
-            tau[j] = currH[j] * dt / 2 / sqrt(1 + temp)
-        for j in range(3):
-            sigma[j] = 2 * tau[j] / (1 + dot(tau_mv, tau_mv))
-        for j in range(3):
-            p_minus[j] = p_mv[i-1, j] + currE[j] * dt / 2
-        for j in range(3):
-            p_prime[j] = p_minus[j] + cross(p_minus_mv, tau_mv, j)
-        for j in range(3):
-            p_plus[j] = p_minus[j] + cross(p_prime_mv, sigma_mv, j)
-        for j in range(3):
-            p_mv[i, j] = p_plus[j] + currE[j] * dt / 2
+        for k in range(3):
+            tau[k] = currH[k] * dt / 2 / sqrt(1 + temp)
+        for k in range(3):
+            sigma[k] = 2 * tau[k] / (1 + dot(tau_mv, tau_mv))
+        for k in range(3):
+            p_minus[k] = p_mv[i-1, k] + currE[k] * dt / 2
+        for k in range(3):
+            p_prime[k] = p_minus[k] + cross(p_minus_mv, tau_mv, k)
+        for k in range(3):
+            p_plus[k] = p_minus[k] + cross(p_prime_mv, sigma_mv, k)
+        for k in range(3):
+            p_mv[i, k] = p_plus[k] + currE[k] * dt / 2
 
-        for j in range(3):
-            averV[j] = (p_mv[i, j] + p_mv[i-1, j]) / 2 / sqrt(1 + temp)
-        for j in range(3):
-            sigma[j] = currE[j] + cross(averV_mv, currH_mv, j)  # Lorentz force (here array sigma is reused)
+        for k in range(3):
+            averV[k] = (p_mv[i, k] + p_mv[i-1, k]) / 2 / sqrt(1 + temp)
+        for k in range(3):
+            sigma[k] = currE[k] + cross(averV_mv, currH_mv, k)  # Lorentz force (here array sigma is reused)
             K = (1 + temp) * swtch * 0.0118 * scaling * (dot(sigma_mv, sigma_mv) - (dot(averV_mv, sigma_mv)) ** 2)  # letter K
-        for j in range(3):
-            p_mv[i, j] = p_mv[i, j] - dt * K * averV[j]
-        for j in range(3):
-            x_mv[i, j] = x_mv[i-1, j] + p_mv[i, j] * dt / sqrt(1 + temp)
-        for j in range(3):
-            v_mv[i, j] = p_mv[i, j] / sqrt(1 + temp)
+        for k in range(3):
+            p_mv[i, k] = p_mv[i, k] - dt * K * averV[k]
+        for k in range(3):
+            x_mv[i, k] = x_mv[i-1, k] + p_mv[i, k] * dt / sqrt(1 + temp)
+        for k in range(3):
+            v_mv[i, k] = p_mv[i, k] / sqrt(1 + temp)
 
     return t, x, p, v
 

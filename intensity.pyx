@@ -23,6 +23,7 @@ cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndar
         double ctXi, ntXi, dXi, averXi
         double ctTmp[3]
         double ntTmp[3]
+        double tmp[3]
 
         double dV[3]
         double averV[3]
@@ -42,6 +43,7 @@ cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndar
 
         double[:] ctTmp_mv
         double[:] ntTmp_mv
+        double[:] tmp_mv
 
         double[:] dV_mv
         double[:] averV_mv
@@ -81,38 +83,8 @@ cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndar
     omg_mv = omg
     res_mv = res
     stp = t.size - 1
+#TODO: Implement proper algorithm (see paper notes)
+    for j in range(1, nOmg, 1):
+        for i in range(1, stp, 1):
 
-    for i in range(1, nOmg, 1):
-        for k in range(3):
-            vec1_mv[k] = 0
-            vec2_mv[k] = 0
-        for j in range(1, stp, 1):
-            ctXi = t_mv[j] - dot(n_mv, x_mv[j, :])
-            ntXi = t_mv[j+1] - dot(n_mv, x_mv[j+1, :])
-            dXi = ntXi - ctXi
-            averXi = 0.5*(ntXi + ctXi)
-
-            for k in range(3):
-                dV[k] = v_mv[j+1, k] - v_mv[j, k]
-                averV[k] = 0.5*(v_mv[j+1, k] + v_mv[j, k])
-            for k in range(3):
-                ctTmp[k] = cos(omg_mv[i] * averXi) * dt / dXi * 2 * averV_mv[k] * sin(omg_mv[i] * dXi / 2)  # 1 часть
-                ctTmp[k] = ctTmp[k] - sin(omg_mv[i] * averXi) * dt / dXi * dV[k] * (
-                            (sin(omg_mv[i] * dXi / 2) / (omg_mv[i] * dXi / 2)) - cos(omg_mv[i] * dXi / 2))
-
-                ntTmp[k] = cos(omg_mv[i] * averXi) * dt / dXi * dV[k] * (
-                            (sin(omg_mv[i] * dXi / 2) / (omg_mv[i] * dXi / 2)) - cos(omg_mv[i] * dXi / 2))
-                ntTmp[k] = ntTmp[k] + sin(omg_mv[i] * averXi) * dt / dXi * 2 * averV_mv[k] * sin(omg_mv[i] * dXi / 2)
-            for k in range(3):
-                vec1_mv[k] = vec1_mv[k] + ctTmp_mv[k]
-                vec2_mv[k] = vec2_mv[k] + ntTmp_mv[k]
-
-        for k in range(3):
-            vec3_mv[k] = cross(n_mv, vec1_mv, k)
-            vec4_mv[k] = cross(n_mv, vec2_mv, k)
-        for k in range(3):
-            vec5_mv[k] = cross(n_mv, vec3_mv, k)
-            vec6_mv[k] = cross(n_mv, vec4_mv, k)
-
-        res_mv[i] = (dot(vec5_mv, vec5_mv) + dot(vec6_mv, vec6_mv)) * omg_mv[i]
     return omg, res

@@ -5,7 +5,7 @@ from plotter import PlotTrajectory, PlotIntensity
 import numpy as np
 
 # Config
-nt = 100000
+nt = 10000
 t_span = (0., 600.)
 
 q = 1.
@@ -24,9 +24,10 @@ trj = boris_routine(objPtcl, objEMF, t_span, nt, Radiation)
 objPlt = PlotTrajectory(trj[0], trj[1])
 objPlt.space()
 
-omg_span = (0., 8.)
-nOmg = 1000
-intns = intensity_integral(trj[0], trj[1], trj[2], trj[3], omg_span, nOmg)
+n = np.array([0, 0, 1]).astype(np.double)
+omg_span = (0., 5.)
+nOmg = 100
+intns = intensity_integral(trj[0], trj[1], trj[2], trj[3], n, omg_span, nOmg)
 
 objIntns = PlotIntensity(intns[0], intns[1])
 objIntns.draw()

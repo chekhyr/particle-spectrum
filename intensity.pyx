@@ -7,7 +7,7 @@ from libc.math cimport sqrt, sin, cos
 from boris cimport dot, cross
 
 
-cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndarray, omg_span: tuple, nOmg: int):
+cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndarray, direction: np.ndarray, omg_span: tuple, nOmg: int):
     cdef:
         int i, j, k, stp
         double dt
@@ -49,12 +49,17 @@ cpdef intensity_integral(t: np.ndarray, x: np.ndarray, p: np.ndarray, v: np.ndar
         double[:] omg_mv
         double[:] res_mv
 
+
+    n = direction
+    n_mv = n
+    dt = sqrt(dot(n_mv, n_mv)) # abs(n), dt is reused for optimization
+    for i in range(3):
+        n[i] /= dt
+
     dt = t[1] - t[0]
-    n = (1, 0, 0)
     omg = np.linspace(omg_span[0], omg_span[1], nOmg)
     res = np.zeros(nOmg)
 
-    n_mv = n
     t_mv = t
     x_mv = x
     p_mv = p

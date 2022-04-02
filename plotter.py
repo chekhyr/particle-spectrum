@@ -63,19 +63,19 @@ class PlotTrajectory:
         plt.tight_layout()
         plt.show()
 
-class PlotIntensity:
-    __slots__ = ['omg', 'J']
+class PlotSpectrum:
+    __slots__ = ['omg', 'Sp']
 
-    def __init__(self, omg: np.ndarray, J: np.ndarray):
+    def __init__(self, omg: np.ndarray, Sp: np.ndarray):
         self.omg = omg
-        self.J = J
+        self.Sp = Sp
         mpl.use('QtCairo')
 
     def draw(self):
-        plt.plot(self.omg, self.J, label='J', c='hotpink')
+        plt.plot(self.omg, self.Sp, c='hotpink')
 
         plt.xlabel('ω')
-        plt.ylabel('J')
+        plt.ylabel('dƐ/dΩ/dω')
         plt.grid()
         #plt.legend()
 

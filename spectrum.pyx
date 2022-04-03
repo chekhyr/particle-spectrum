@@ -1,4 +1,4 @@
-# cython: language_level=3str, boundscheck=False, wraparound=False, cdivision=True
+# cython: language_level=3str, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
 import numpy as np # to use numpy methods
 
 cimport numpy as np # to convert numpy into c

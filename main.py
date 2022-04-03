@@ -14,15 +14,15 @@ q = 1.
 m = 1.
 x0 = np.array([0, 0, 0]).astype(np.double)
 p0 = np.array([0.9, 0, 0]).astype(np.double)
-Radiation = True
+ReactionForce = True
 
 objPtcl = Particle(q, m, x0, p0)
 objEMF = EMF(0)
 
-trj = boris_routine(objPtcl, objEMF, t_span, nt, Radiation)
+trj = boris_routine(objPtcl, objEMF, t_span, nt, ReactionForce)
 
 objPlt = PlotTrajectory(trj[0], trj[1])
-#objPlt.space()
+objPlt.space()
 
 
 n = np.array([0, 1, 0]).astype(np.double)
@@ -31,7 +31,7 @@ nOmg = 500
 spct = spectrum_routine(trj[0], trj[1], trj[2], trj[3], n, omg_span, nOmg, objPtcl)
 
 objSpct = PlotSpectrum(spct[0], spct[1])
-#objSpct.draw()
+objSpct.draw()
 
 
 tht_span = (0., np.pi)

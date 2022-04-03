@@ -81,7 +81,7 @@ cdef class EMF:
 
         return res
 
-cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, rad: bool):
+cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, react: bool):
     cdef:
         int i, k, swtch, stp
         double scaling, K, dt, temp = 0
@@ -120,7 +120,7 @@ cpdef tuple boris_routine(ptcl: Particle, field: EMF, t_span: tuple, nt: int, ra
     x = np.zeros((nt, 3), dtype=np.double)
     p = np.zeros((nt, 3), dtype=np.double)
     v = np.zeros((nt, 3), dtype=np.double)
-    swtch = rad
+    swtch = react
     stp = nt
 
     t_mv = t

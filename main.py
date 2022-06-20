@@ -34,7 +34,7 @@ objSpct = PlotSpectrum(spct[0], spct[1])
 objSpct.draw()
 
 
-tht_span = (0., np.pi)
+tht_span = (0., 2*np.pi)
 nTht = 100
 
 tht = np.linspace(tht_span[0], tht_span[1], nTht)

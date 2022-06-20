@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+mpl.use('QtCairo')
 
 
 class PlotTrajectory:
@@ -9,7 +10,6 @@ class PlotTrajectory:
     def __init__(self, t: np.ndarray, x: np.ndarray):
         self.t = t
         self.x = x
-        mpl.use('QtCairo')
 
     def space(self):
         fig = plt.figure()
@@ -63,21 +63,21 @@ class PlotTrajectory:
         plt.tight_layout()
         plt.show()
 
-class PlotSpectrum:
-    __slots__ = ['omg', 'Sp']
 
-    def __init__(self, omg: np.ndarray, Sp: np.ndarray):
+class PlotSpectrum:
+    __slots__ = ['omg', 'spct']
+
+    def __init__(self, omg: np.ndarray, spct: np.ndarray):
         self.omg = omg
-        self.Sp = Sp
-        mpl.use('QtCairo')
+        self.spct = spct
 
     def draw(self):
-        plt.plot(self.omg, self.Sp, c='hotpink')
+        plt.plot(self.omg, self.spct, c='hotpink')
 
         plt.xlabel('ω')
         plt.ylabel('dƐ/dΩ/dω')
         plt.grid()
-        #plt.legend()
+        # plt.legend()
 
         plt.tight_layout()
         plt.show()
